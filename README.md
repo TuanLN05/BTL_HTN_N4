@@ -14,3 +14,10 @@ AT24C32 0x50
 // 4: Tham so khong hop le
 extern volatile uint8_t I2C_Error;
 debug bằng stlink để xem có thể có lỗi gì
+
+I2C_Write(addr, data, len)	Ghi len byte den dia chi Slave 7-bit.
+I2C_Read(addr, data)	Doc 1 byte tu Slave.
+I2C_ReadBytes(addr, data, len)	Doc len byte lien tiep tu Slave.
+I2C_WriteReg8(addr, reg, value)	Ghi 1 byte vao thanh ghi reg cua Slave.
+I2C_ReadReg8(addr, reg, data)	Doc 1 byte tu thanh ghi reg.
+I2C_ReadRegBytes(addr, reg, data, len)	Doc nhieu byte tu thanh ghi bat dau reg, su dung Repeated START.
