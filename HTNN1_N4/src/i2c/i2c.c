@@ -2,6 +2,7 @@
 #include "i2c.h"
 
 volatile uint8_t I2C_Error = 0;
+volatile uint32_t g_i2c_pin_samples[5];
 
 // Khoi tao TIM2, moi tick bang 0.5ms
 static void TIM2_Init(void)
@@ -30,6 +31,20 @@ static void TIM2_Init(void)
 
     // Bat TIM2
     TIM2->CR1 = 0x0001;
+}
+
+// Tao delay bang TIM2
+void I2C_DelayMs(uint16_t ms)
+{
+    while (ms--)
+    {
+        uint16_t start = (uint16_t)TIM2->CNT;
+
+        // Hai tick TIM2 bang 1ms
+        while ((uint16_t)(TIM2->CNT - start) < 2)
+        {
+        }
+    }
 }
 
 // Cho co trang thai I2C trong SR1
@@ -138,6 +153,40 @@ static void I2C_Abort(void)
     I2C1->CR1 |= I2C_CR1_ACK;
 }
 
+// Tao chuyen muc SDA/SCL de mo khoa bo loc analog I2C tren STM32F1.
+// Chi dung luc khoi tao, khi chua co task nao giu bus.
+static void I2C_ResetBus(void)
+{
+    I2C1->CR1 &= ~I2C_CR1_PE;
+    GPIOB->BSRR = (1U << 6) | (1U << 7);
+    GPIOB->CRL = (GPIOB->CRL & 0x00FFFFFF) | 0x77000000;
+    I2C_DelayMs(1);
+    g_i2c_pin_samples[0] = GPIOB->IDR;
+    if ((GPIOB->IDR & 0xC0) != 0xC0) goto restore;
+
+    GPIOB->BSRR = 1 << (7 + 16);
+    I2C_DelayMs(1);
+    g_i2c_pin_samples[1] = GPIOB->IDR;
+    if (GPIOB->IDR & (1 << 7)) goto restore;
+    GPIOB->BSRR = 1 << (6 + 16);
+    I2C_DelayMs(1);
+    g_i2c_pin_samples[2] = GPIOB->IDR;
+    if (GPIOB->IDR & (1 << 6)) goto restore;
+    GPIOB->BSRR = 1 << 6;
+    I2C_DelayMs(1);
+    g_i2c_pin_samples[3] = GPIOB->IDR;
+    if (!(GPIOB->IDR & (1 << 6))) goto restore;
+    GPIOB->BSRR = 1 << 7;
+    I2C_DelayMs(1);
+
+    g_i2c_pin_samples[4] = GPIOB->IDR;
+restore:
+    GPIOB->BSRR = (1 << 6) | (1 << 7);
+    GPIOB->CRL = (GPIOB->CRL & 0x00FFFFFF) | 0xFF000000;
+    I2C1->CR1 = I2C_CR1_SWRST;
+    I2C1->CR1 = 0;
+}
+
 // Khoi tao I2C1
 void I2C_Init(void)
 {
@@ -166,6 +215,12 @@ void I2C_Init(void)
 
     // Tat I2C truoc khi cau hinh
     I2C1->CR1 &= ~0x0001;
+
+    I2C_ResetBus();
+    RCC->APB1RSTR |= RCC_APB1RSTR_I2C1RST;
+    __DSB();
+    RCC->APB1RSTR &= ~RCC_APB1RSTR_I2C1RST;
+    __DSB();
 
     // Clock APB1 = 8MHz
     I2C1->CR2 = 0x08;
