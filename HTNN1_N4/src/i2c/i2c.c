@@ -32,20 +32,6 @@ static void TIM2_Init(void)
     TIM2->CR1 = 0x0001;
 }
 
-// Tao delay bang TIM2
-void I2C_DelayMs(uint16_t ms)
-{
-    while (ms--)
-    {
-        uint16_t start = (uint16_t)TIM2->CNT;
-
-        // Hai tick TIM2 bang 1ms
-        while ((uint16_t)(TIM2->CNT - start) < 2)
-        {
-        }
-    }
-}
-
 // Cho co trang thai I2C trong SR1
 static uint8_t I2C_Wait(uint32_t flag)
 {
@@ -181,14 +167,14 @@ void I2C_Init(void)
     // Tat I2C truoc khi cau hinh
     I2C1->CR1 &= ~0x0001;
 
-    // Clock APB1 = 36MHz
+    // Clock APB1 = 8MHz
     I2C1->CR2 = 0x08;
 
     // Standard mode 100kHz
-    // CCR = 36 MHz / (2 * 100 kHz) = 180
+    // CCR = 8 MHz / (2 * 100 kHz) = 40
     I2C1->CCR = 0x28;
 
-    // TRISE = 37
+    // TRISE = 9
     I2C1->TRISE = 0x09;
 
     // Bat bit 14 cua OAR1

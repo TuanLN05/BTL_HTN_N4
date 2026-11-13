@@ -14,9 +14,6 @@ extern volatile uint8_t I2C_Error;
 // Khoi tao I2C va TIM2
 void I2C_Init(void);
 
-// Delay bang TIM2
-void I2C_DelayMs(uint16_t ms);
-
 // Gui nhieu byte den Slave
 void I2C_Write(uint8_t addr, const uint8_t *data, uint16_t len);
 
