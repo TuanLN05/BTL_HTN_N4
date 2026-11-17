@@ -1,0 +1,41 @@
+#include "button.h"
+#include <stddef.h>
+#include <string.h>
+
+void Button_Init(ButtonManager *b, ButtonReadFn read, void *user, uint32_t debounce_ms)
+{
+    if (!b) return;
+    memset(b, 0, sizeof(*b));
+    b->read = read;
+    b->user = user;
+    b->debounce_ms = debounce_ms ? debounce_ms : 25;
+    // Thoi diem ban dau = 0; raw/stable = 0 (chua nhan).
+}
+
+ButtonEvent Button_Poll(ButtonManager *b, uint32_t now_ms)
+{
+    // raw la muc doc tuc thoi; stable chi doi khi raw on dinh du debounce_ms.
+    // Can goi dinh ky; ham khong delay hay cho nut duoc tha.
+    uint8_t i;
+    ButtonEvent result = BUTTON_NONE;
+    if (!b || !b->read) return BUTTON_NONE;
+
+    for (i = 0; i < 3; ++i) {
+        ButtonKey *k = &b->keys[i];
+        uint8_t pressed = b->read(i, b->user) ? 1 : 0;
+
+        if (pressed != k->raw) {
+            // Muc chan vua thay doi: bat dau dem lai debounce.
+            k->raw = pressed;
+            k->changed_at_ms = now_ms;
+        }
+        if (k->raw != k->stable &&
+            (uint32_t)(now_ms - k->changed_at_ms) >= b->debounce_ms) {
+            k->stable = k->raw;
+            // Phat event luc THA nut -> khong bi lap trong luc giu.
+            if (!k->stable && result == BUTTON_NONE)
+                result = (ButtonEvent)(BUTTON_UP + i);
+        }
+    }
+    return result;
+}
