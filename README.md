@@ -1,49 +1,34 @@
+# Clone toàn bộ file trong nhánh develop về, sau đó code các task lần lượt trong thư mục "lib", và tổ chức file như trước
 
-# STM32F103C8T6 - I2C Driver
+## Ví dụ:
 
-## 1. Chan ket noi I2C1
+### Phuoc
 
-- PB6: SCL
-- PB7: SDA
-
-## 2. Dia chi I2C (7-bit)
-
-| Module | Address |
-|---|---|
-| OLED SSD1306 | 0x3C |
-| AHT20 | 0x38 |
-| BMP280 | 0x76 hoac 0x77 |
-| RTC DS1307 | 0x68 |
-| EEPROM AT24C32 | 0x50 |
-
-## 3. Kiem tra loi I2C
-
-```c
-// 0: Thanh cong
-// 1: Slave khong ACK
-// 2: Loi bus
-// 3: Timeout
-// 4: Tham so khong hop le
-extern volatile uint8_t I2C_Error;
+```text
+lib/Sensor/MQ5/mq5.cpp
+lib/Sensor/MQ5/mq5.h
 ```
 
-Su dung ST-Link Debug trong VS Code de theo doi bien `I2C_Error`.
+### Quoc
 
-- `0`: Khong phat hien loi giao tiep.
-- `1`: Slave khong phan hoi ACK.
-- `2`: Loi bus I2C.
-- `3`: Qua thoi gian cho.
-- `4`: Tham so truyen vao khong hop le.
+```text
+lib/Application/Display/displayOled.cpp
+lib/Application/Display/displayOled.h
+```
 
-Trong che do Debug, them `I2C_Error` vao WATCH de xem ma loi sau khi goi ham I2C.
+## Sử dụng hệ điều hành FreeRTOS để code cho các task
 
-## 4. Cac ham su dung
+## Khi code task, sử dụng các ngoại vi đã tạo để code
 
-| Ham | Chuc nang |
-|---|---|
-| `I2C_Write(addr, data, len)` | Ghi len byte den dia chi Slave 7-bit. |
-| `I2C_Read(addr, data)` | Doc 1 byte tu Slave. |
-| `I2C_ReadBytes(addr, data, len)` | Doc len byte lien tiep tu Slave. |
-| `I2C_WriteReg8(addr, reg, value)` | Ghi 1 byte vao thanh ghi reg cua Slave. |
-| `I2C_ReadReg8(addr, reg, data)` | Doc 1 byte tu thanh ghi reg. |
-| `I2C_ReadRegBytes(addr, reg, data, len)` | Doc nhieu byte tu thanh ghi bat dau reg, su dung Repeated START. |
+## Riêng task code các cảm biến thì tạo thêm 1 drive "all_sensor" bao gồm các api đã tạo trong nhiệm vụ đã ghi trên github.
+
+### Ví dụ:
+
+- Tổ chức file:
+
+  ```text
+  lib/all_sensor.cpp
+  lib/all_sensor.h
+  ```
+
+trong file `lib/all_sensor.h` bao gồm các hàm như: `float readMQ5();...`
