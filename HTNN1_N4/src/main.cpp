@@ -7,6 +7,7 @@
 #include "uartdma.h"
 #include "FreeRTOSConfig.h"
 #include "ADC.h"
+#include "aht20_bmp280.h"
 // CMSIS startup calls main; keep setup/loop as application hooks.
 int main(void)
 {
