@@ -65,5 +65,5 @@
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
-  "cmake.sourceDirectory": "D:/HOC_TAP_TUNG_NAM/Ki_I_nam_4/He_thong_nhung/interface/BTL_HTN_N4/HTNN1_N4/lib/FreeRTOS-Kernel"
+  "cmake.sourceDirectory": "D:/HOC_TAP_TUNG_NAM/Ki_I_nam_4/He_thong_nhung/interface/BTL_HTN_N4/HTNN1_N4/include/FreeRTOS-Kernel"
 }
