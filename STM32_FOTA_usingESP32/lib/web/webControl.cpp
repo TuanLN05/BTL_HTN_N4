@@ -2,7 +2,6 @@
 #include "firmwareDownload.h"
 #include <ESPmDNS.h>
 #include <LittleFS.h>
-#include <Preferences.h>
 #include <WebServer.h>
 #include <WiFi.h>
 #include <esp_system.h>
@@ -10,7 +9,6 @@
 namespace {
 extern const char controlPage[] asm("_binary_control_html_start");
 WebServer server(80);
-String password;
 String token;
 IPAddress servedIP;
 const char *host = "stm32-fota";
@@ -29,12 +27,9 @@ String randomKey() {
   return String(key);
 }
 
-bool authenticate() {
+void sendPageHeaders() {
   server.sendHeader("Cache-Control", "no-store");
   server.sendHeader("X-Frame-Options", "DENY");
-  if (server.authenticate("admin", password.c_str())) return true;
-  server.requestAuthentication(DIGEST_AUTH, "STM32 FOTA", "Cần đăng nhập để điều khiển ESP32.");
-  return false;
 }
 
 String htmlText(String text) {
@@ -57,8 +52,7 @@ void receiveUpload(const FirmwareStatus &status) {
   HTTPUpload &file = server.upload();
   switch (file.status) {
     case UPLOAD_FILE_START: {
-      if (status.busy || !hasValidTicket(status) ||
-          !server.authenticate("admin", password.c_str())) return;
+      if (status.busy || !hasValidTicket(status)) return;
       String extension = file.filename.substring(file.filename.lastIndexOf('.') + 1);
       extension.toLowerCase();
       if (uploadName.length() || uploadError.length() || file.name != "firmware" ||
@@ -90,22 +84,13 @@ void receiveUpload(const FirmwareStatus &status) {
 } // namespace
 
 void initWebControl(FirmwareStatus &status, bool (*start)(FirmwareAction)) {
-  Preferences settings;
-  if (settings.begin("fota-web", false)) {
-    if (settings.isKey("password")) {
-      password = settings.getString("password", "");
-    } else {
-      const String key = randomKey();
-      if (key.length() == 24 && settings.putString("password", key) == key.length()) password = key;
-    }
-  }
-  if (!password.length()) {
-    Serial.println("Khong khoi tao duoc mat khau web trong NVS.");
+  token = randomKey();
+  if (token.length() != 24) {
+    Serial.println("Khong khoi tao duoc ma bieu mau web.");
     return;
   }
-  token = randomKey();
   server.on("/", HTTP_GET, [&status]() {
-    if (!authenticate()) return;
+    sendPageHeaders();
     String page(controlPage);
     page.replace("{{refresh}}", status.busy ? "<meta http-equiv='refresh' content='2'>" : "");
     page.replace("{{ticket}}", ticket(status));
@@ -116,7 +101,7 @@ void initWebControl(FirmwareStatus &status, bool (*start)(FirmwareAction)) {
   });
 
   server.on("/upload", HTTP_POST, [&status, start]() {
-    if (!authenticate()) return;
+    sendPageHeaders();
     if (!hasValidTicket(status) || status.busy) {
       server.send(409, "text/html; charset=utf-8",
                   "<p>Lệnh đã hết hiệu lực. <a href='/'>Xem trạng thái ESP32</a></p>");
@@ -135,7 +120,7 @@ void initWebControl(FirmwareStatus &status, bool (*start)(FirmwareAction)) {
 }
 
 void pollWebControl() {
-  if (!password.length()) return;
+  if (token.length() != 24) return;
   const IPAddress ip = WiFi.status() == WL_CONNECTED ? WiFi.localIP() : IPAddress();
   if (ip != servedIP) {
     if (servedIP != IPAddress()) {
@@ -146,8 +131,7 @@ void pollWebControl() {
     if (ip != IPAddress()) {
       server.begin();
       if (MDNS.begin(host)) MDNS.addService("http", "tcp", 80);
-      Serial.printf("Web: http://%s/ | Tai khoan: admin | Mat khau web: %s\n",
-                    ip.toString().c_str(), password.c_str());
+      Serial.printf("Web: http://%s/\n", ip.toString().c_str());
     }
   }
   if (servedIP != IPAddress()) {
