@@ -53,6 +53,10 @@ enum
     RTC_ERROR_CLOCK_HALTED = 8
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Doc thoi gian, giu nguyen du lieu neu gap loi
 // Chi goi tu task RTC sau khi bo lap lich chay, khong goi tu ngat
 // Tra ve 1 khi thanh cong, 0 khi loi
@@ -72,5 +76,9 @@ void readRTC(DATE *date, TIME *time);
 
 // Giong readRTC, tra ve 1 khi lay duoc mau va 0 khi chua san sang hoac loi
 uint8_t RTC_GetSnapshot(DATE *date, TIME *time);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
