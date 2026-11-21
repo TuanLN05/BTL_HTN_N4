@@ -1,5 +1,7 @@
-#include "RTC.h"
+#include "rtc.h"
+extern "C" {
 #include "i2c_rtos.h"
+}
 #include <stddef.h>
 
 // Luu ma loi RTC gan nhat
