@@ -588,7 +588,7 @@ static void sensors_task(void *argument)
         // Giu mau tot cuoi cung, cap nhat trang thai rieng tung cam bien
         taskENTER_CRITICAL();
         if (aht20_ok)
-        {
+        {   
             sensors_data.aht20.temperature_c = aht20_sample.temperature_c;
             sensors_data.aht20.humidity_percent = aht20_sample.humidity_percent;
             ++sensors_data.aht20_read_count;
