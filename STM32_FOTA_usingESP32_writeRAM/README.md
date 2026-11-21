@@ -1,5 +1,17 @@
-# N?p firmware STM32 qua web
+# Nạp firmware STM32 qua web
+Nạp firmware tại đường link này: http://stm32-fota.local/
 
-M? [trang n?p firmware](http://stm32-fota.local/) t? thi?t b? c?ng Wi-Fi v?i ESP32. N?u t?n `.local` kh?ng ph?n gi?i ???c, d?ng ??a ch? IP ? d?ng `Web:` trong Serial Monitor.
+thay đổi:
 
-M? trang tr?c ti?p, ch?n file `.bin` v? b?m **N?p v?o STM32**.
+*WIFI_SSID = "Tuanzzz";
+*WIFI_PASSWORD = "22222222";
+
+cùng mạng với máy tính
+
+#Sơ đồ nối dây
+|esp32|STM32|Active|
+|16-rx|PA9-tx||
+|17-tx|PA10-rx||
+|gpio26|nrst|pull down|
+|gpio25|boot0|pull up|
+|gnd|gnd||
