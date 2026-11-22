@@ -14,6 +14,9 @@ extern "C" {
 #define AHT20_STATUS_CALIBRATED 0x08U
 #define AHT20_BUSY_POLL_LIMIT 21U
 
+static TaskHandle_t aht20_task_handle;
+static AHT20_UpdateCallback aht20_update_callback;
+static void *aht20_update_user;
 static uint8_t aht20_initialized;
 static uint8_t aht20_last_error = AHT20_ERROR_NOT_INITIALIZED;
 
@@ -242,12 +245,44 @@ static void sensors_task(void *argument)
         sensors_data.aht20_error = aht20_error;
         taskEXIT_CRITICAL();
 
+        // Callback gui queue chay ngoai vung bao ve du lieu
+        if (aht20_update_callback != NULL)
+            aht20_update_callback(aht20_ok ? &aht20_sample : NULL,
+                                  aht20_ok, aht20_update_user);
+
         xTaskDelayUntil(&last_wake, pdMS_TO_TICKS(1000U));
     }
 }
 
+uint8_t AHT20_SetUpdateCallback(AHT20_UpdateCallback callback, void *user)
+{
+    if (aht20_task_handle != NULL)
+        return 0U;
+
+    aht20_update_callback = callback;
+    aht20_update_user = user;
+    return 1U;
+}
+
 BaseType_t Sensors_TaskStart(void)
 {
-    return xTaskCreate(sensors_task, "AHT20", 384U, NULL,
-                       tskIDLE_PRIORITY + 1U, NULL);
+    if (aht20_task_handle != NULL)
+        return pdPASS;
+
+    if (xTaskCreate(sensors_task, "AHT20", 384U, NULL,
+                     tskIDLE_PRIORITY + 1U, &aht20_task_handle) != pdPASS)
+    {
+        aht20_last_error = AHT20_ERROR_TASK_CREATE;
+        sensors_data.aht20_error = AHT20_ERROR_TASK_CREATE;
+        return pdFAIL;
+    }
+
+    aht20_last_error = AHT20_ERROR_NOT_INITIALIZED;
+    sensors_data.aht20_error = AHT20_ERROR_NOT_INITIALIZED;
+    return pdPASS;
+}
+
+uint8_t initAHT20(void)
+{
+    return Sensors_TaskStart() == pdPASS;
 }
