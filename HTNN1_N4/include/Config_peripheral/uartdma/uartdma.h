@@ -12,7 +12,7 @@
  * Chi cau hinh khi khong truyen/nhan; dung anh xa chan mac dinh.
  * Ca 3 ham tra true khi thanh cong, false khi tham so sai/kenh ban/loi.
  */
-bool dma_uart(uint32_t baudrate);
+void dma_uart(uint32_t baudrate);
 
 /* Blocking, khong timeout: cho du size byte; khong them ky tu '\0'.
  * Chi dung buffer khi tra true. RX chi hoat dong trong luc goi ham.
