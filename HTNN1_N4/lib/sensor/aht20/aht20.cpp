@@ -1,4 +1,4 @@
-#include "aht20_bmp280.h"
+#include "aht20.h"
 
 extern "C" {
 #include "i2c_rtos.h"

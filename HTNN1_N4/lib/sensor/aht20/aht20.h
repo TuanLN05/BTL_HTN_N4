@@ -1,5 +1,5 @@
-#ifndef AHT20_BMP280_H
-#define AHT20_BMP280_H
+#ifndef AHT20_H
+#define AHT20_H
 
 #include <stdint.h>
 
