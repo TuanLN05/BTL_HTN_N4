@@ -1,14 +1,15 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include "modeBoot.h"
+#include "uart.h"
 #include "stm32Flash.h"
 #include "webControl.h"
 #include <freertos/semphr.h>
 #include <utility>
 
 // Điền thông tin mạng và IP LAN của máy tính chạy máy chủ firmware.
-static const char *WIFI_SSID = "Tuanzzz";
-static const char *WIFI_PASSWORD = "22222222";
+static const char *WIFI_SSID = "Nha Tro Vui Ve";
+static const char *WIFI_PASSWORD = "66668888";
 static FirmwareStatus status;
 static SemaphoreHandle_t jobDone;
 // Worker ghi kết quả trước khi báo jobDone. Chỉ loop() cập nhật status.
@@ -55,10 +56,23 @@ static void finishJob() {
   if (!succeeded) Serial.println(result);
 }
 
+static void readUart() {
+  // Bootloader owns Serial2 while firmware is being flashed.
+  if (status.busy) return;
+
+  // Read the current batch so loop() can keep servicing the web server.
+  for (int remaining = Serial2.available(); remaining > 0; --remaining) {
+    const int data = Serial2.read();
+    if (data < 0) break;
+    Serial.write(static_cast<uint8_t>(data));
+  }
+}
+
 void setup() {
   Serial.begin(115200);
  
   modeBootInit();
+  uartApp();
   jobDone = xSemaphoreCreateBinary();
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
@@ -69,31 +83,7 @@ void setup() {
 void loop() {
   finishJob();
   pollWebControl();
-  static int lastReading = HIGH;
-  static int stableButton = HIGH;
-  static unsigned long changedAt = 0;
-
-  const int reading = digitalRead(bootEsp32);
-  const unsigned long now = millis();
-
-  if (reading != lastReading) {
-    lastReading = reading;
-    changedAt = now;
-  }
-
-  // GPIO0 is active LOW. Run once per debounced press, even while held.
-  if (reading != stableButton && now - changedAt >= 30) {
-    stableButton = reading;
-    if (stableButton == LOW && !status.busy) {
-      Serial.println("BOOT pressed: requesting STM32 bootloader...");
-      if (modeBoot()) {
-        Serial.println("STM32 bootloader confirmed (ACK 0x79).");
-      } else {
-        Serial.println("STM32 bootloader not confirmed. Check diagnostics above.");
-      }
-    }
-  }
-
+  readUart();
   delay(1);
 }
 
