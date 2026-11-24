@@ -1,8 +1,8 @@
 #ifndef i2c_h
 #define i2c_h
 
-#include "stm32f1xx.h"
-#include <stdint.h>
+#include "stm32f103xb.h"
+#include "stdint.h"
 
 void i2c1_init(void);
 void i2c1_Start(void);

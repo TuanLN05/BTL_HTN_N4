@@ -44,11 +44,18 @@ void Board_I2CRecoverBus(void)
 int Board_I2CInit(void)
 {
     for (unsigned attempt = 0; attempt < 3; ++attempt) {
-        Board_I2CRecoverBus();
+        // Driver cu co hai lan ghi GPIO. Phuc hoi SAU driver de xoa BUSY
+        // phat sinh khi PB6/PB7 di qua trang thai analog trung gian.
         i2c1_init();
+        Board_I2CRecoverBus();
+        // Recover reset I2C; nap lai timing, khong goi driver doi GPIO lan nua.
+        I2C1->CR2 = 16;
+        I2C1->CCR = 80;
+        I2C1->TRISE = 17;
+        I2C1->CR1 = I2C_CR1_PE;
         // Cho ngoai vi cap nhat BUSY sau khi bat PE.
         BusDelay();
-        if ((GPIOB->IDR & 0xC0U) == 0xC0U &&
+        if ((GPIOB->IDR & 0xC0) == 0xC0 &&
             !(I2C1->SR2 & I2C_SR2_BUSY)) return 0;
     }
     return -1;
