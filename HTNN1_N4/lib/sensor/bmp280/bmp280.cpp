@@ -318,7 +318,7 @@ int32_t adc20(const uint8_t *data)
 }
 
 // Cong thuc Bosch 3.11.3: bu nhiet do truoc, ap suat Q24.8 doi sang Pa.
-float compensate_pressure(int32_t raw_pressure, int32_t raw_temp)
+float compensate_pressure(int32_t raw_pressure, int32_t raw_temp, float *temperature_c)
 {
     const int64_t t1 = (raw_temp >> 3) - 2 * static_cast<int32_t>(cal.t1);
     const int64_t t2 = (raw_temp >> 4) - static_cast<int32_t>(cal.t1);
@@ -341,6 +341,8 @@ float compensate_pressure(int32_t raw_pressure, int32_t raw_temp)
         last_error = BMP280_ERROR_INVALID_DATA;
         return NAN;
     }
+    if (temperature_c)
+        *temperature_c = static_cast<float>(t_fine) / 5120.0f;
     return static_cast<float>(q24_8) / 256.0f;
 }
 }
@@ -387,8 +389,10 @@ uint8_t bmp280_init(void)
     return 1U;
 }
 
-float readBmp280(void)
+float readBmp280Sample(float *temperature_c)
 {
+    if (temperature_c)
+        *temperature_c = NAN;
     if (!initialized)
     {
         last_error = BMP280_ERROR_NOT_INITIALIZED;
@@ -411,8 +415,10 @@ float readBmp280(void)
         last_error = BMP280_ERROR_INVALID_DATA;
         return NAN;
     }
-    return compensate_pressure(pressure, temperature);
+    return compensate_pressure(pressure, temperature, temperature_c);
 }
+
+float readBmp280(void) { return readBmp280Sample(nullptr); }
 
 uint8_t bmp280_get_last_error(void) { return last_error; }
 uint8_t bmp280_get_address(void) { return sensor_address; }

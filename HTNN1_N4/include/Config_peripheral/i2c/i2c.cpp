@@ -69,4 +69,3 @@ void i2c1_readBytes(uint8_t addr, uint8_t *data, uint8_t size)
 	}
 	i2c1_Stop();
 }
-

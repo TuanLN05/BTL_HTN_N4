@@ -56,10 +56,10 @@ void MQ5_Init(void)
         ADC1->CR2 = 0U;
 }
 
-float readMQ5()
+bool readMQ5Raw(uint16_t *value)
 {
-    if (!adc_ready)
-        return NAN;
+    if (!adc_ready || !value)
+        return false;
 
     ADC1->SR &= ~ADC_SR_EOC;
     ADC1->CR2 |= ADC_CR2_SWSTART;
@@ -67,9 +67,17 @@ float readMQ5()
     {
         ADC1->CR2 = 0U;
         adc_ready = false;
-        return NAN;
+        return false;
     }
-    const uint32_t adcValue = ADC1->DR;
+    *value = static_cast<uint16_t>(ADC1->DR);
+    return true;
+}
+
+float readMQ5()
+{
+    uint16_t adcValue;
+    if (!readMQ5Raw(&adcValue))
+        return NAN;
     // Chuyen doi gia tri ADC sang gia tri nồng độ khí (ppm)
     float ppm = (float)adcValue * 5.5f / 4095.0f; // Giả sử điện áp tham chiếu là 5.5V và ADC có độ phân giải 12 bit
     return ppm;

@@ -33,6 +33,8 @@ uint8_t bmp280_reset(void); // Goi lai init sau reset.
 
 // Ap suat da bu nhiet do (Pa), tra NAN khi loi. Chia 100 de doi sang hPa.
 float readBmp280(void);
+// Cung mot lan do: tra ap suat (Pa) va ghi nhiet do (C) neu co con tro.
+float readBmp280Sample(float *temperature_c);
 uint8_t bmp280_get_last_error(void);
 uint8_t bmp280_get_address(void); // 0 neu chua tim thay.
 uint8_t bmp280_get_chip_id(void);

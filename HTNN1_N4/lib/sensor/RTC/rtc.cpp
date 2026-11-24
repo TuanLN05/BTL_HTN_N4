@@ -1,4 +1,11 @@
 #include "rtc.h"
+#include "board_i2c.h"
+
+static bool read_registers(uint8_t reg, uint8_t *data, uint8_t size)
+{
+    return Board_I2CWrite(rtc_addr, &reg, 1U) &&
+           Board_I2CRead(rtc_addr, data, size);
+}
 
 static uint8_t bcd_decode(uint8_t value)
 {
@@ -28,33 +35,27 @@ static bool date_time_valid(const DATE *date, const TIME *time)
     return date->day >= 1U && date->day <= days;
 }
 
-void rtc_init(void)
+bool rtc_init(void)
 {
-    uint8_t reg = 0U;
-    uint8_t raw[7] = {0U};
-    i2c1_writeBytes(rtc_addr, &reg, 1U);
-    i2c1_readBytes(rtc_addr, raw, sizeof(raw));
+    uint8_t seconds;
+    if (!read_registers(0U, &seconds, 1U))
+        return false;
+    if (!(seconds & 0x80U))
+        return true;
 
-    // Chi bat dao dong neu dang dung, giu nguyen ngay gio
-    uint8_t seconds = raw[0] & 0x7FU;
-    if ((raw[0] & 0x80U) && bcd_decode(seconds) <= 59U)
-    {
-        uint8_t command[] = {0U, seconds};
-        i2c1_writeBytes(rtc_addr, command, sizeof(command));
-    }
+    // CH la bit dung dao dong tren DS1307. Giu nguyen cac thanh ghi khac.
+    const uint8_t command[] = {0U, static_cast<uint8_t>(seconds & 0x7FU)};
+    return Board_I2CWrite(rtc_addr, command, sizeof(command));
 }
 
-void readRTC(DATE *date, TIME *time)
+bool readRTC(DATE *date, TIME *time)
 {
     if (date == nullptr || time == nullptr)
-        return;
+        return false;
 
-    uint8_t reg = 0U;
-    uint8_t raw[7] = {0U};
-    i2c1_writeBytes(rtc_addr, &reg, 1U);
-    i2c1_readBytes(rtc_addr, raw, sizeof(raw));
-    if (raw[2] & 0x80U)
-        return;
+    uint8_t raw[7];
+    if (!read_registers(0U, raw, sizeof(raw)) || (raw[2] & 0x80U))
+        return false;
 
     DATE sample_date = {bcd_decode(raw[4]), bcd_decode(raw[5]),
                         (uint16_t)(2000U + bcd_decode(raw[6])), raw[3]};
@@ -65,25 +66,26 @@ void readRTC(DATE *date, TIME *time)
     {
         uint8_t hour = bcd_decode(raw[2] & 0x1FU);
         if (hour < 1U || hour > 12U)
-            return;
+            return false;
         sample_time.hour = (uint8_t)((hour % 12U) + ((raw[2] & 0x20U) ? 12U : 0U));
     }
     if (!date_time_valid(&sample_date, &sample_time))
-        return;
+        return false;
 
     *date = sample_date;
     *time = sample_time;
+    return true;
 }
 
-void setRTC(const DATE *date, const TIME *time)
+bool setRTC(const DATE *date, const TIME *time)
 {
     if (date == nullptr || time == nullptr || !date_time_valid(date, time))
-        return;
+        return false;
 
     uint8_t raw[] = {
         0U, bcd_encode(time->second), bcd_encode(time->minute),
         bcd_encode(time->hour), date->weekday, bcd_encode(date->day),
         bcd_encode(date->month), bcd_encode((uint8_t)(date->year - 2000U))
     };
-    i2c1_writeBytes(rtc_addr, raw, sizeof(raw));
+    return Board_I2CWrite(rtc_addr, raw, sizeof(raw));
 }

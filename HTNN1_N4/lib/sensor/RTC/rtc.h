@@ -18,11 +18,11 @@ typedef struct
 } TIME;
 
 // Goi sau i2c1_init, khong dat lai ngay gio
-void rtc_init(void);
+bool rtc_init(void);
 
 // Giu dau ra cu neu con tro NULL hoac du lieu sai
-void readRTC(DATE *date, TIME *time);
+bool readRTC(DATE *date, TIME *time);
 
-void setRTC(const DATE *date, const TIME *time);
+bool setRTC(const DATE *date, const TIME *time);
 
 #endif
