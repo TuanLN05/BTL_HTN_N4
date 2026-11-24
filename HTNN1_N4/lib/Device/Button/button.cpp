@@ -1,14 +1,26 @@
 #include "button.h"
+#include "GPIO.h"
 #include <stddef.h>
 #include <string.h>
 
-// Khoi tao trang thai ba nut, callback doc chan va thoi gian chong doi nut.
-void Button_Init(ButtonManager *b, ButtonReadFn read, void *user, uint32_t debounce_ms)
+// Thu tu UP, DOWN, SELECT; tra 1 khi nut dang nhan.
+static uint8_t Button_ReadGPIO(uint8_t index, void *user)
+{
+    static const uint8_t pins[3] = {12, 14, 13};
+    (void)user;
+    if (index >= 3) return 0;
+    return gpio_Read(GPIOB, pins[index]) == 0;
+}
+
+// Khoi tao GPIO va trang thai chong doi cho ba nut nhan noi xuong GND.
+void Button_Init(ButtonManager *b, uint32_t debounce_ms)
 {
     if (!b) return;
+    (void)gpio_Config(GPIOB, 12, GPIO_INPUT_PULLUP);
+    (void)gpio_Config(GPIOB, 13, GPIO_INPUT_PULLUP);
+    (void)gpio_Config(GPIOB, 14, GPIO_INPUT_PULLUP);
     memset(b, 0, sizeof(*b));
-    b->read = read;
-    b->user = user;
+    b->read = Button_ReadGPIO;
     b->debounce_ms = debounce_ms ? debounce_ms : 25;
     // Thoi diem ban dau = 0; raw/stable = 0 (chua nhan).
 }

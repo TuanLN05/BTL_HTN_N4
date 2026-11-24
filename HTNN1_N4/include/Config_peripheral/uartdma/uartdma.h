@@ -7,8 +7,8 @@
 
 
 /* USART1: PA9 TX, PA10 RX, 8N1; DMA1 Channel 4 TX, Channel 5 RX.
- * Dung clock mac dinh HSI 8 MHz, AHB/APB2 khong chia.
- * Goi dma_uart() truoc khi doc/ghi; giu clock APB2 o 8 MHz.
+ * Tinh baud theo clock APB2 tai thoi diem khoi tao.
+ * Goi dma_uart() truoc khi doc/ghi va goi lai sau khi doi clock.
  * Chi cau hinh khi khong truyen/nhan; dung anh xa chan mac dinh.
  * Ca 3 ham tra true khi thanh cong, false khi tham so sai/kenh ban/loi.
  */

@@ -28,8 +28,9 @@ typedef struct {
     uint32_t debounce_ms;
 } ButtonManager;
 
-// Khong init GPIO tai day
-void Button_Init(ButtonManager *b, ButtonReadFn read, void *user, uint32_t debounce_ms);
+// Khoi tao GPIO va chong doi: UP=PB12, DOWN=PB14, SELECT=PB13.
+// debounce_ms = 0 thi dung mac dinh 25 ms.
+void Button_Init(ButtonManager *b, uint32_t debounce_ms);
 
 // Goi dinh ky (vd 10ms). Khi THA nut hop le moi tao 1 event.
 // Nhung nut duoc giu khong bi lap su kien lien tuc.

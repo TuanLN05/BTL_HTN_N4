@@ -282,7 +282,7 @@ void Menu_HandleButton(Menu *m, ButtonEvent event)
                     case 0: m->page = MENU_PAGE_LIMIT_LIST; break;
                     case 1:
                         m->edit_rtc = m->rtc_valid ? m->rtc :
-                                      (MenuDateTime){2026, 1, 1, 0, 0, 0};
+                                      MenuDateTime{2026, 1, 1, 0, 0, 0};
                         m->rtc_save_failed = 0;
                         m->selected_rtc = 0;
                         m->page = MENU_PAGE_RTC_LIST;

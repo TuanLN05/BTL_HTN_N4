@@ -5,7 +5,12 @@ static bool initialized = false;
 
 bool dma_uart(uint32_t baudrate)
 {
-    if (baudrate == 0U) return false;
+    static const uint8_t apb_div[8] = {1, 1, 1, 1, 2, 4, 8, 16};
+    SystemCoreClockUpdate();
+    const uint32_t pclk = SystemCoreClock / apb_div[(RCC->CFGR >> 11) & 7U];
+    if (baudrate == 0U || baudrate > pclk / 16U) return false;
+    const uint32_t divider = (pclk + baudrate / 2U) / baudrate;
+    if (divider > 0xFFFFU) return false;
 
     RCC->AHBENR |= (1U << 0);                    // DMA1EN.
     RCC->APB2ENR |= (1U << 2) | (1U << 14);     // IOPAEN, USART1EN.
@@ -18,7 +23,7 @@ bool dma_uart(uint32_t baudrate)
     GPIOA->CRH = (GPIOA->CRH & ~((0xFU << 4) | (0xFU << 8))) |
                  (0xBU << 4) |  // PA9: TX, alternate function push-pull.
                  (0x8U << 8);   // PA10: RX, input pull-up.
-    USART1->BRR = 8000000U / baudrate; // Clock APB2 mac dinh 8 MHz.
+    USART1->BRR = divider; // Tinh baud theo clock APB2 hien tai.
     (void)USART1->SR;
     (void)USART1->DR;
 

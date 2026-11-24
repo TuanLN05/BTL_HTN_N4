@@ -2,7 +2,7 @@
 
 ## Ban build hien tai
 
-`src/main.c` chay bare-metal, clock HSI/2 x 4 = 16 MHz, APB1 = 16 MHz.
+`src/main.cpp` chay bare-metal, clock HSI/2 x 4 = 16 MHz, APB1 = 16 MHz.
 Khong khoi chay scheduler FreeRTOS. Cac module task/IPC/BSP van duoc giu
 cho viec tich hop sau, nhung khong nam trong ban build mac dinh.
 
@@ -25,31 +25,26 @@ Can dien tro keo len SCL/SDA phu hop voi module.
 
 ## Luong chuong trinh
 
-1. Cau hinh clock 16 MHz va SysTick polling cho delay.
-2. Goi `i2c1_init()`, khoi tao OLED qua callback `Test_I2CWrite`.
-3. Khoi tao ba nut va TIM2 dem 1 ms.
-4. Khoi tao menu, nap nguong tu Flash neu co ban ghi hop le.
-5. Vong lap doc TIM2, quet nut, xu ly menu va ve khi `dirty = 1`.
-
-`g_i2c_test_stage`: 1 = clock OK, 2 = I2C init xong,
-3 = OLED init xong, 4 = da gui frame menu.
-`g_i2c_test_frames`, `g_button_test_events`, `g_button_test_last_event`
-phuc vu quan sat trong debugger.
+`main()` goi `App_Init()` mot lan: clock 16 MHz, SysTick 1 ms,
+I2C1, Button (gom GPIO va chong doi), OLED, Menu va nap nguong Flash.
+Sau do vong lap goi Button_Poll, Menu_HandleButton va Menu_Render.
+SysTick_Handler cap nhat thoi gian mili giay; DelayMs dung thoi gian nay.
+SAVE nguong ghi Flash; callback RTC de trong cho toi khi co driver RTC.
 
 ## Cac module
 
 | File | Vai tro |
 | --- | --- |
-| `src/main.c` | Clock, callback phan cung, khoi tao va vong lap test |
-| `include/Config_peripheral/i2c/i2c.c` | Driver I2C thanh ghi theo mau da chon |
-| `lib/Device/SH1106/sh1106.c` | Framebuffer va truyen hinh OLED |
-| `lib/Device/Button/button.c` | Chong doi ba nut |
-| `lib/Application/Display/menu.c` | Menu, nguong, trang ngay gio, canh bao |
-| `lib/Application/Storage/threshold_store.c` | Luu/nap bon nguong tren hai page Flash |
-| `lib/Task/Display/app_ui.c` | Ket noi UI voi BSP cho ban FreeRTOS sau nay |
-| `lib/Task/Display/task_display.c` | Task hien thi, nhan mau tu queue |
-| `lib/Task/IPC/app_ipc.c` | Queue du lieu va yeu cau giua cac task |
-| `lib/Task/BSP/board_port.c` | Adapter GPIO, I2C truc tiep, Flash va queue |
+| `src/main.cpp` | Clock, callback phan cung, khoi tao va vong lap test |
+| `include/Config_peripheral/i2c/i2c.cpp` | Driver I2C thanh ghi theo mau da chon |
+| `lib/Device/SH1106/sh1106.cpp` | Framebuffer va truyen hinh OLED |
+| `lib/Device/Button/button.cpp` | Chong doi ba nut |
+| `lib/Application/Display/menu.cpp` | Menu, nguong, trang ngay gio, canh bao |
+| `lib/Application/Storage/threshold_store.cpp` | Luu/nap bon nguong tren hai page Flash |
+| `lib/Task/Display/app_ui.cpp` | Ket noi UI voi BSP cho ban FreeRTOS sau nay |
+| `lib/Task/Display/task_display.cpp` | Task hien thi, nhan mau tu queue |
+| `lib/Task/IPC/app_ipc.cpp` | Queue du lieu va yeu cau giua cac task |
+| `lib/Task/BSP/board_port.cpp` | Adapter GPIO, I2C truc tiep, Flash va queue |
 
 ## Phan task de tich hop sau
 

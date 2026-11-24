@@ -1,8 +1,15 @@
-#include "ADC.h"
+#include "adc.h"
+#include "GPIO.h"
 
 uint8_t adc1_config(uint8_t channel)
 {
     if (channel > 9) return 0;
+
+    // Kenh 0..7: PA0..PA7; kenh 8..9: PB0..PB1.
+    if (!gpio_Config(channel < 8 ? GPIOA : GPIOB,
+                     channel < 8 ? channel : channel - 8, GPIO_ANALOG)) return 0;
+    // PCLK2 / 6: ADC clock toi da 12 MHz khi PCLK2 = 72 MHz.
+    RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_ADCPRE) | RCC_CFGR_ADCPRE_DIV6;
 
     RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
     ADC1->CR2 = 0;
