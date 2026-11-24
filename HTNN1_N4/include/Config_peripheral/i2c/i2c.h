@@ -4,6 +4,10 @@
 #include "stm32f1xx.h"
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // 0: Thanh cong
 // 1: Slave khong ACK
 // 2: Loi bus
@@ -13,6 +17,9 @@ extern volatile uint8_t I2C_Error;
 
 // Khoi tao I2C va TIM2
 void I2C_Init(void);
+
+// Delay blocking bang TIM2; chi goi sau I2C_Init.
+void I2C_DelayMs(uint16_t ms);
 
 // Gui nhieu byte den Slave
 void I2C_Write(uint8_t addr, const uint8_t *data, uint16_t len);
@@ -31,5 +38,9 @@ void I2C_ReadReg8(uint8_t addr, uint8_t reg, uint8_t *data);
 
 // Doc nhieu thanh ghi lien tiep
 void I2C_ReadRegBytes(uint8_t addr, uint8_t reg, uint8_t *data,  uint16_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

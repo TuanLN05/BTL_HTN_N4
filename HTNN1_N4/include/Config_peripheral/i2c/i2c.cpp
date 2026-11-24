@@ -162,20 +162,24 @@ static void I2C_ResetBus(void)
     GPIOB->CRL = (GPIOB->CRL & 0x00FFFFFF) | 0x77000000;
     I2C_DelayMs(1);
     g_i2c_pin_samples[0] = GPIOB->IDR;
-    if ((GPIOB->IDR & 0xC0) != 0xC0) goto restore;
+    if ((GPIOB->IDR & 0xC0) != 0xC0)
+        goto restore;
 
     GPIOB->BSRR = 1 << (7 + 16);
     I2C_DelayMs(1);
     g_i2c_pin_samples[1] = GPIOB->IDR;
-    if (GPIOB->IDR & (1 << 7)) goto restore;
+    if (GPIOB->IDR & (1 << 7))
+        goto restore;
     GPIOB->BSRR = 1 << (6 + 16);
     I2C_DelayMs(1);
     g_i2c_pin_samples[2] = GPIOB->IDR;
-    if (GPIOB->IDR & (1 << 6)) goto restore;
+    if (GPIOB->IDR & (1 << 6))
+        goto restore;
     GPIOB->BSRR = 1 << 6;
     I2C_DelayMs(1);
     g_i2c_pin_samples[3] = GPIOB->IDR;
-    if (!(GPIOB->IDR & (1 << 6))) goto restore;
+    if (!(GPIOB->IDR & (1 << 6)))
+        goto restore;
     GPIOB->BSRR = 1 << 7;
     I2C_DelayMs(1);
 
