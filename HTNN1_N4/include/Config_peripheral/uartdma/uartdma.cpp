@@ -3,9 +3,9 @@
 
 static bool initialized = false;
 
-bool dma_uart(uint32_t baudrate)
+void dma_uart(uint32_t baudrate)
 {
-    if (baudrate == 0U) return false;
+    if (baudrate == 0U) return;
 
     RCC->AHBENR |= (1U << 0);                    // DMA1EN.
     RCC->APB2ENR |= (1U << 2) | (1U << 14);     // IOPAEN, USART1EN.
@@ -33,7 +33,6 @@ bool dma_uart(uint32_t baudrate)
 
     USART1->CR1 = (1U << 13) | (1U << 3) | (1U << 2); // UE, TE, RE.
     initialized = true;
-    return true;
 }
 
 bool dma_uart_read(uint8_t *buffer, uint16_t size)
