@@ -1,20 +1,16 @@
-#ifndef AHT20_H
-#define AHT20_H
+#ifndef aht20_h
+#define aht20_h
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "stm32f103xb.h"
+#include "i2c.h"
 
-// Goi sau I2C_Init, chi khoi tao cam bien
-void initAHT20(void);
-
-// Moi lan goi thuc hien mot phep do; tra NAN neu chua init hoac doc loi
-// Tu thu init lai neu lan init truoc that bai hoac mat ket noi
-float readAht20Temp(void); // Nhiet do, do C
-float readAht20Humi(void); // Do am, %RH
-
-#ifdef __cplusplus
-}
-#endif
-
+#define aht20_addr 0x38
+#define aht20_status 0x71
+#define AHT20_SOFTRESET 0xBA
+void aht20_reset();
+void delay(uint32_t time);
+void readAHT20(float *temp, float *humi);
+float readAHT20_temp();
+float readAHT20_humi();
+void aht20_init();
 #endif
