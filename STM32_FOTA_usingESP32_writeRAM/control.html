@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {{refresh}}
+  <title>Nạp firmware STM32</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 1.25rem; color: #172033; background: #f1f5f9; font: 1rem/1.6 system-ui, sans-serif; }
+    main { max-width: 38rem; margin: 8vh auto; background: white; border: 1px solid #cbd5e1; border-radius: 1rem; padding: clamp(1rem, 4vw, 2rem); }
+    h1 { margin: 0; line-height: 1.2; }
+    p { overflow-wrap: anywhere; }
+    .image { border-block: 1px solid #cbd5e1; padding-block: 1rem; }
+    button { font: inherit; font-weight: 600; color: white; background: #175cd3; min-height: 3rem; border: 0; border-radius: .5rem; padding: .5rem 1rem; cursor: pointer; }
+    button:disabled { color: #475569; background: #e2e8f0; cursor: default; }
+    :focus-visible { outline: 3px solid #172033; outline-offset: 3px; }
+    form { display: grid; gap: .5rem; justify-items: start; }
+    label { font-weight: 600; }
+    input[type=file] { font: inherit; width: 100%; padding-block: .5rem; }
+    input::file-selector-button { font: inherit; min-height: 3rem; }
+    .hint { margin: 0 0 .5rem; color: #475569; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Nạp firmware STM32</h1>
+    <p role="status">{{message}}</p>
+    <p class="image"><strong>Firmware</strong><br>{{image}}</p>
+    <form action="/upload?ticket={{ticket}}" method="post" enctype="multipart/form-data">
+      <label for="firmware">Chọn firmware STM32</label>
+      <input id="firmware" name="firmware" type="file" accept=".bin" required aria-describedby="file-hint" {{busy}}>
+      <p id="file-hint" class="hint">File .bin cho STM32F103C8, tối đa 64 KiB.</p>
+      <button type="submit" {{busy}}>Nạp vào STM32</button>
+    </form>
+  </main>
+  <script>
+    const input = document.getElementById("firmware");
+    input.addEventListener("change", () => {
+      const file = input.files[0];
+      input.setCustomValidity(file && file.size > 64 * 1024 ? "File .bin vượt quá giới hạn 64 KiB." : "");
+    });
+    input.form.addEventListener("submit", () => {
+      document.querySelector("[role=status]").textContent = "Đang gửi firmware đến ESP32…";
+      input.form.querySelector("button").disabled = true;
+    });
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) location.reload();
+    });
+  </script>
+</body>
+</html>

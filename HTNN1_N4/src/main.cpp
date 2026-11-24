@@ -1,54 +1,62 @@
-#include "stm32f103xb.h"
 #include "uartdma.h"
-#include "i2c.h"
-#include "bmp280.h"
-#include <math.h>
+#include "aht20.h"
+#include "mq5.h"
+#include "rtc.h"
 #include <stdio.h>
-#include <string.h>
 
-static void uart_write_text(const char *text)
+// Gui nhiet do (C) va do am (%) voi hai chu so thap phan
+bool uart_send_temp_humi()
 {
-    dma_uart_writebytes((const uint8_t *)text, (uint16_t)strlen(text));
+    float temp, humi;
+    readAHT20(&temp, &humi);
+    char buffer[128];
+    int length = snprintf(buffer, sizeof(buffer),
+                          "Temp: %.2f C, Humi: %.2f %%\r\n",
+                          static_cast<double>(temp), static_cast<double>(humi));
+    return dma_uart_writebytes(reinterpret_cast<const uint8_t *>(buffer),
+                               static_cast<uint16_t>(length));
+}
+void uart_send_MQ5()
+{
+    float mq5 = readMQ5();
+    char buffer[64];
+    int length = snprintf(buffer, sizeof(buffer), "MQ5: %.2f\r\n",
+                          static_cast<double>(mq5));
+    dma_uart_writebytes(reinterpret_cast<const uint8_t *>(buffer),
+                        static_cast<uint16_t>(length));
+}
+
+void uart_send_rtc()
+{
+    DATE date = {};
+    TIME time = {};
+    readRTC(&date, &time);
+
+    char buffer[64];
+    const int length = snprintf(buffer, sizeof(buffer),
+                                "RTC: %02u/%02u/%04u %02u:%02u:%02u, weekday=%u\r\n",
+                                static_cast<unsigned>(date.day),
+                                static_cast<unsigned>(date.month),
+                                static_cast<unsigned>(date.year),
+                                static_cast<unsigned>(time.hour),
+                                static_cast<unsigned>(time.minute),
+                                static_cast<unsigned>(time.second),
+                                static_cast<unsigned>(date.weekday));
+    dma_uart_writebytes(reinterpret_cast<const uint8_t *>(buffer),
+                        static_cast<uint16_t>(length));
 }
 
 int main(void)
 {
-    // Bat UART truoc de co the xem ca loi khoi tao cam bien.
+    i2c1_init();
+    aht20_init();
+    MQ5_Init();
     dma_uart(115200);
-    uart_write_text("BMP280 starting - UART 115200, 8N1\r\n");
-    uint8_t sensor_ready = 0U;
-
+    rtc_init();
     while (1)
     {
-        char buffer[128];
-        if (!sensor_ready)
-        {
-            sensor_ready = bmp280_init();
-            if (!sensor_ready)
-            {
-                snprintf(buffer, sizeof(buffer), "BMP280 init failed, error=%u\r\n",
-                         (unsigned int)bmp280_get_last_error());
-                uart_write_text(buffer);
-                I2C_DelayMs(1000U);
-                continue;
-            }
-            snprintf(buffer, sizeof(buffer), "BMP280 init OK, address=0x%02X chip_id=0x%02X\r\n",
-                     (unsigned int)bmp280_get_address(), (unsigned int)bmp280_get_chip_id());
-            uart_write_text(buffer);
-        }
-
-        float pressure = readBmp280();
-        if (isnan(pressure))
-        {
-            snprintf(buffer, sizeof(buffer), "BMP280 read failed, error=%u\r\n",
-                     (unsigned int)bmp280_get_last_error());
-            sensor_ready = 0U;
-        }
-        else
-        {
-            snprintf(buffer, sizeof(buffer), "Pressure: %.2f Pa\r\n", (double)pressure);
-        }
-        uart_write_text(buffer);
-        I2C_DelayMs(1000U);
+        uart_send_rtc();
+        uart_send_temp_humi();
+        uart_send_MQ5();
     }
 }
