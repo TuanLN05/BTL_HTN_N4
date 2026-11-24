@@ -26,7 +26,9 @@ void Board_I2CRecoverBus(void)
         BusDelay();
     }
     // Tao STOP: SDA len trong khi SCL dang o muc cao.
-    GPIOB->BRR = (1 << 6) | (1 << 7);
+    GPIOB->BRR = 1 << 7;
+    BusDelay();
+    GPIOB->BRR = 1 << 6;
     BusDelay();
     GPIOB->BSRR = 1 << 6;
     BusDelay();
@@ -37,5 +39,18 @@ void Board_I2CRecoverBus(void)
     I2C1->CR1 = I2C_CR1_SWRST;
     BusDelay();
     I2C1->CR1 = 0;
+}
+
+int Board_I2CInit(void)
+{
+    for (unsigned attempt = 0; attempt < 3; ++attempt) {
+        Board_I2CRecoverBus();
+        i2c1_init();
+        // Cho ngoai vi cap nhat BUSY sau khi bat PE.
+        BusDelay();
+        if ((GPIOB->IDR & 0xC0U) == 0xC0U &&
+            !(I2C1->SR2 & I2C_SR2_BUSY)) return 0;
+    }
+    return -1;
 }
 
