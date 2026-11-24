@@ -1,18 +1,15 @@
-#include "stm32f103xb.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "semphr.h"
-#include "i2c_rtos.h"
-#include "gpio.h"
-#include "uartdma.h"
-#include "FreeRTOSConfig.h"
-#include "ADC.h"
 #include "rtc.h"
-// CMSIS startup calls main; keep setup/loop as application hooks.
+
+DATE rtc_date = {};
+TIME rtc_time = {};
+
 int main(void)
 {
+    i2c1_init();
+    rtc_init();
+
     while (1)
     {
-
+        readRTC(&rtc_date, &rtc_time);
     }
 }
