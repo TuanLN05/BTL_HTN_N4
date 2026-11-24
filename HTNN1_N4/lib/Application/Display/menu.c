@@ -8,7 +8,7 @@
 #define SENSOR_ALL_VALID ((uint8_t)((1 << MENU_SENSOR_COUNT) - 1))
 #define LIST_VISIBLE 6
 
-// Gioi han va buoc chinh phuc vu thu giao dien; chua duoc hieu chuan cho canh bao thuc te.
+// Gioi han va buoc dieu chinh cua tung nguong trong menu.
 // Nhiet do, do am va ap suat luu theo don vi nhan 10; gas dung gia tri ADC 12 bit.
 static const int32_t limit_min[MENU_LIMIT_COUNT] = {-400, 0, 3000, 0};
 static const int32_t limit_max[MENU_LIMIT_COUNT] = { 850, 1000, 12000, 4095};
@@ -134,7 +134,7 @@ static void recompute_alarms(Menu *m)
     m->dirty = 1;
 }
 
-// Khoi tao trang chu, callback va cac nguong mac dinh de thu giao dien.
+// Khoi tao trang chu, callback va cac nguong mac dinh.
 void Menu_Init(Menu *m, Sh1106 *display, const MenuHooks *hooks)
 {
     if (!m) return;

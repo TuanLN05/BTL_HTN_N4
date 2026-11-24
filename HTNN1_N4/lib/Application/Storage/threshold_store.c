@@ -4,10 +4,10 @@
 #include <string.h>
 
 // Hai page 1KB cuoi Flash 64KB; platformio.ini gioi han firmware 62KB.
-#define PAGE0 0x0800F800UL
-#define PAGE1 0x0800FC00UL
-#define MAGIC 0x54485231UL
-#define COMMIT 0xA55AU
+#define PAGE0 0x0800F800
+#define PAGE1 0x0800FC00
+#define MAGIC 0x54485231 // Dau nhan dien ban ghi nguong.
+#define COMMIT 0xA55A // Dau xac nhan ban ghi hoan tat.
 #define ERRORS (FLASH_SR_PGERR | FLASH_SR_WRPRTERR)
 typedef struct {
     uint32_t magic, sequence;
@@ -19,9 +19,9 @@ typedef struct {
 static uint32_t checksum(const Record *r)
 {
     const uint8_t *p = (const uint8_t *)r;
-    uint32_t h = 2166136261UL;
+    uint32_t h = 2166136261;
     size_t i;
-    for (i = 0; i < offsetof(Record, checksum); ++i) h = (h ^ p[i]) * 16777619UL;
+    for (i = 0; i < offsetof(Record, checksum); ++i) h = (h ^ p[i]) * 16777619;
     return h;
 }
 // Kiem tra tung nguong co nam trong khoang gia tri cho phep hay khong.
@@ -79,8 +79,8 @@ int ThresholdStore_Save(const int32_t values[MENU_LIMIT_COUNT])
     primask = __get_PRIMASK();
     __disable_irq();
     if (FLASH->CR & FLASH_CR_LOCK) {
-        FLASH->KEYR = 0x45670123UL;
-        FLASH->KEYR = 0xCDEF89ABUL;
+        FLASH->KEYR = 0x45670123;
+        FLASH->KEYR = 0xCDEF89AB;
     }
     if (FLASH->CR & FLASH_CR_LOCK) goto done;
     (void)wait_flash();
