@@ -2,7 +2,7 @@
 #include "aht20.h"
 #include <stdio.h>
 
-// Gui nhiet do (C) va do am (%) voi hai chu so thap phan.
+// Gui nhiet do (C) va do am (%) voi hai chu so thap phan
 bool uart_send_temp_humi(float temp, float humi)
 {
     char buffer[128];
