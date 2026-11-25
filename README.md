@@ -1,34 +1,26 @@
-# Clone toàn bộ file trong nhánh develop về, sau đó code các task lần lượt trong thư mục "lib", và tổ chức file như trước
+# BTL hệ thống nhúng — Nhóm 4
 
-## Ví dụ:
+Repository gồm hai dự án PlatformIO:
 
-### Phuoc
+- [HTNN1_N4](HTNN1_N4/README.md): firmware STM32F103C8 sử dụng CMSIS và FreeRTOS.
+- [STM32_FOTA_usingESP32_writeRAM](STM32_FOTA_usingESP32_writeRAM/README.md): dự án ESP32 phục vụ cập nhật firmware STM32.
 
-```text
-lib/Sensor/MQ5/mq5.cpp
-lib/Sensor/MQ5/mq5.h
-```
+## Tổ chức firmware STM32
 
-### Quoc
+Lấy code từ nhánh làm việc của nhóm và bổ sung code theo cấu trúc sau trong `HTNN1_N4/`:
 
 ```text
-lib/Application/Display/displayOled.cpp
-lib/Application/Display/displayOled.h
+bsp/          # Hỗ trợ board, ánh xạ chân và khởi tạo phần cứng
+hal/inc/      # Header driver ngoại vi, cảm biến và OLED
+hal/src/      # Mã nguồn driver tương ứng
+middlewares/  # FreeRTOS Kernel, Port và Heap
+app/inc/      # Header ứng dụng, task, IPC và FreeRTOSConfig.h
+app/src/      # Mã nguồn ứng dụng, task và IPC
+main.cpp      # Khởi tạo board, tạo task, chạy scheduler
 ```
 
-## Sử dụng hệ điều hành FreeRTOS để code cho các task
+Ba task FreeRTOS được khởi tạo trong `HTNN1_N4/main.cpp`. Hai queue dữ liệu nối TaskSensor → TaskAlarm → TaskUI được quản lý trong `app/src/app_ipc.c`.
 
-## Khi code task, sử dụng các ngoại vi đã tạo để code
+Ví dụ driver MQ5 nằm tại `hal/inc/mq5.h` và `hal/src/mq5.cpp`; logic menu nằm tại `app/inc/menu.h` và `app/src/menu.cpp`.
 
-## Riêng task code các cảm biến thì tạo thêm 1 drive "all_sensor" bao gồm các api đã tạo trong nhiệm vụ đã ghi trên github.
-
-### Ví dụ:
-
-- Tổ chức file:
-
-  ```text
-  lib/all_sensor.cpp
-  lib/all_sensor.h
-  ```
-
-trong file `lib/all_sensor.h` bao gồm các hàm như: `float readMQ5();...`
+Chi tiết cây thư mục, kết nối phần cứng, luồng task và lệnh build: [HTNN1_N4/README.md](HTNN1_N4/README.md).
