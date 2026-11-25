@@ -44,6 +44,9 @@ constexpr uint32_t error_flags = bus_errors | I2C_SR1_AF | I2C_SR1_TIMEOUT;
 uint32_t cycles_per_ms;
 uint32_t pclk1_hz;
 
+/**
+ * @brief Cap nhat clock va bat bo dem chu ky DWT.
+ */
 void init_timer()
 {
     SystemCoreClockUpdate();
@@ -52,12 +55,24 @@ void init_timer()
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
+/**
+ * @brief Cho bang bo dem chu ky DWT.
+ * @param[in] cycles So chu ky can cho.
+ */
 void delay_cycles(uint32_t cycles)
 {
     const uint32_t start = DWT->CYCCNT;
     while (DWT->CYCCNT - start < cycles) {}
 }
 
+/**
+ * @brief Cho trang thai bit I2C duoc yeu cau va ghi lai ma loi neu can.
+ * @param[in] reg Thanh ghi I2C can theo doi.
+ * @param[in] mask Mat na bit can kiem tra.
+ * @param[in] set true de cho bit bat, false de cho tat het.
+ * @retval true Da dat trang thai yeu cau.
+ * @retval false Loi I2C hoac timeout.
+ */
 bool wait_flag(volatile uint32_t &reg, uint32_t mask, bool set = true)
 {
     const uint32_t start = DWT->CYCCNT;
@@ -80,6 +95,9 @@ bool wait_flag(volatile uint32_t &reg, uint32_t mask, bool set = true)
     return false;
 }
 
+/**
+ * @brief Reset I2C1 va nap timing 80 kHz theo clock APB1.
+ */
 void configure_timing()
 {
     I2C1->CR1 = I2C_CR1_SWRST;
@@ -92,6 +110,12 @@ void configure_timing()
     I2C1->CR1 = I2C_CR1_PE | I2C_CR1_ACK;
 }
 
+/**
+ * @brief Dat muc cac duong SCL va SDA va kiem tra muc doc lai.
+ * @param[in] levels Mat na cac chan can nha len HIGH.
+ * @retval true Ca hai chan dat muc yeu cau.
+ * @retval false It nhat mot chan chua dat muc yeu cau.
+ */
 bool set_lines(uint32_t levels)
 {
     GPIOB->BSRR = levels | ((pins & ~levels) << 16U);
@@ -99,6 +123,11 @@ bool set_lines(uint32_t levels)
     return (GPIOB->IDR & pins) == levels;
 }
 
+/**
+ * @brief Tao chuoi canh SCL va SDA va khoi tao lai timing khi I2C1 bi ket BUSY.
+ * @retval true Da tao duoc chuoi muc yeu cau.
+ * @retval false Khong tao duoc mot muc trong chuoi.
+ */
 bool unlock_busy()
 {
     // ES096: tao canh SDA/SCL khi ca hai day dang cao nhung BUSY bi ket.
@@ -113,6 +142,11 @@ bool unlock_busy()
     return released;
 }
 
+/**
+ * @brief Chuan bi clock, timing va cac duong I2C1 cho BMP280.
+ * @retval true Bus da ranh.
+ * @retval false Cau hinh, muc duong bus hoac giao dich loi.
+ */
 bool prepare_bus()
 {
     init_timer();
@@ -141,6 +175,10 @@ bool prepare_bus()
     return wait_flag(I2C1->SR2, I2C_SR2_BUSY, false);
 }
 
+/**
+ * @brief Huy giao dich loi va giu ma loi BMP280 ban dau.
+ * @retval false Giao dich bi huy.
+ */
 bool abort_transfer()
 {
     const uint8_t failure = last_error;
@@ -155,6 +193,11 @@ bool abort_transfer()
     return false;
 }
 
+/**
+ * @brief Cho STOP hoan tat va bat lai ACK.
+ * @retval true Giao dich da ket thuc.
+ * @retval false Co loi hoac het thoi gian cho.
+ */
 bool finish_transfer()
 {
     if (!wait_flag(I2C1->CR1, I2C_CR1_STOP, false))
@@ -164,12 +207,22 @@ bool finish_transfer()
     return true;
 }
 
+/**
+ * @brief Xoa co ADDR bang viec doc lan luot SR1 va SR2.
+ */
 void clear_address()
 {
     (void)I2C1->SR1;
     (void)I2C1->SR2;
 }
 
+/**
+ * @brief Phat START va gui dia chi thiet bi theo chieu doc hoac ghi.
+ * @param[in] address Dia chi I2C 7 bit.
+ * @param[in] read true de doc, false de ghi.
+ * @retval true Da nhan ACK dia chi.
+ * @retval false Loi bus, NACK hoac timeout.
+ */
 bool start_address(uint8_t address, bool read)
 {
     I2C1->CR1 |= I2C_CR1_START;
@@ -179,6 +232,12 @@ bool start_address(uint8_t address, bool read)
     return wait_flag(I2C1->SR1, I2C_SR1_ADDR);
 }
 
+/**
+ * @brief Nap mot byte va doi co truyen xong.
+ * @param[in] value Byte can ghi.
+ * @retval true Da gui byte.
+ * @retval false Loi bus hoac timeout.
+ */
 bool send_byte(uint8_t value)
 {
     if (!wait_flag(I2C1->SR1, I2C_SR1_TXE))
@@ -187,6 +246,13 @@ bool send_byte(uint8_t value)
     return wait_flag(I2C1->SR1, I2C_SR1_BTF);
 }
 
+/**
+ * @brief Bat dau giao dich ghi va chon thanh ghi BMP280.
+ * @param[in] address Dia chi I2C 7 bit.
+ * @param[in] reg Dia chi thanh ghi.
+ * @retval true Da chon thanh ghi.
+ * @retval false Loi bus, NACK hoac timeout.
+ */
 bool select_register(uint8_t address, uint8_t reg)
 {
     last_error = BMP280_ERROR_NONE;
@@ -196,6 +262,13 @@ bool select_register(uint8_t address, uint8_t reg)
     return send_byte(reg);
 }
 
+/**
+ * @brief Nhan cac byte BMP280 va phat STOP sau dia chi doc.
+ * @param[out] data Bo dem nhan.
+ * @param[in] size So byte can doc.
+ * @retval true Da nhan cac byte.
+ * @retval false Loi bus hoac timeout.
+ */
 bool receive(uint8_t *data, uint8_t size)
 {
     if (size == 1U)
@@ -238,6 +311,15 @@ bool receive(uint8_t *data, uint8_t size)
     return true;
 }
 
+/**
+ * @brief Doc lien tiep cac thanh ghi BMP280 bang repeated START.
+ * @param[in] address Dia chi I2C 7 bit.
+ * @param[in] reg Dia chi thanh ghi dau tien.
+ * @param[out] data Bo dem nhan.
+ * @param[in] size So byte can doc.
+ * @retval true Da doc day byte.
+ * @retval false Giao dich loi.
+ */
 bool read_registers(uint8_t address, uint8_t reg, uint8_t *data, uint8_t size)
 {
     if (!select_register(address, reg) || !start_address(address, true) || !receive(data, size))
@@ -245,6 +327,13 @@ bool read_registers(uint8_t address, uint8_t reg, uint8_t *data, uint8_t size)
     return finish_transfer();
 }
 
+/**
+ * @brief Ghi mot byte vao thanh ghi cua BMP280 dang duoc chon.
+ * @param[in] reg Dia chi thanh ghi.
+ * @param[in] value Byte can ghi.
+ * @retval true Da ghi thanh cong.
+ * @retval false Giao dich loi.
+ */
 bool write_register(uint8_t reg, uint8_t value)
 {
     if (!select_register(sensor_address, reg) || !send_byte(value))
@@ -253,6 +342,11 @@ bool write_register(uint8_t reg, uint8_t value)
     return finish_transfer();
 }
 
+/**
+ * @brief Tim BMP280 dung ID tai 0x76 hoac 0x77.
+ * @retval true Tim thay va da luu dia chi.
+ * @retval false Khong tim thay chip phu hop hoac loi I2C.
+ */
 bool check_chip()
 {
     sensor_address = chip_id = 0U;
@@ -288,6 +382,12 @@ bool check_chip()
     return false;
 }
 
+/**
+ * @brief Cho cac bit trang thai BMP280 duoc xoa.
+ * @param[in] mask Mat na bit trang thai can cho.
+ * @retval true Tat ca cac bit da tat.
+ * @retval false Doc trang thai loi hoac timeout.
+ */
 bool wait_ready(uint8_t mask)
 {
     for (int attempt = 0; attempt < 100; ++attempt)
@@ -303,22 +403,43 @@ bool wait_ready(uint8_t mask)
     return false;
 }
 
+/**
+ * @brief Doc mot so nguyen 16 bit khong dau luu theo little-endian.
+ * @param[in] data Con tro toi hai byte du lieu.
+ * @return Gia tri da giai ma.
+ */
 uint16_t u16(const uint8_t *data)
 {
     return static_cast<uint16_t>(data[0] | (data[1] << 8U));
 }
 
+/**
+ * @brief Doc mot so nguyen 16 bit co dau luu theo little-endian.
+ * @param[in] data Con tro toi hai byte du lieu.
+ * @return Gia tri da giai ma.
+ */
 int16_t s16(const uint8_t *data)
 {
     return static_cast<int16_t>(u16(data));
 }
 
+/**
+ * @brief Ghep gia tri ADC 20 bit tu ba byte BMP280.
+ * @param[in] data Con tro toi ba byte du lieu.
+ * @return Gia tri ADC tho.
+ */
 int32_t adc20(const uint8_t *data)
 {
     return (static_cast<int32_t>(data[0]) << 12U) | (data[1] << 4U) | (data[2] >> 4U);
 }
 
-// Cong thuc Bosch 3.11.3: bu nhiet do truoc, ap suat Q24.8 doi sang Pa.
+/**
+ * @brief Bu nhiet do va ap suat BMP280 bang he so hieu chuan.
+ * @param[in] raw_pressure Gia tri ADC ap suat.
+ * @param[in] raw_temp Gia tri ADC nhiet do.
+ * @param[out] temperature_c Nhiet do theo do C neu tinh thanh cong. Co the la NULL.
+ * @return Ap suat da bu theo Pa, hoac NAN neu du lieu hoac he so khong hop le.
+ */
 float compensate_pressure(int32_t raw_pressure, int32_t raw_temp, float *temperature_c)
 {
     const int64_t t1 = (raw_temp >> 3) - 2 * static_cast<int32_t>(cal.t1);

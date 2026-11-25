@@ -3,7 +3,13 @@
 #include <stddef.h>
 #include <string.h>
 
-// Thu tu UP, DOWN, SELECT; tra 1 khi nut dang nhan.
+/**
+ * @brief Doc muc nhan cua nut tu BSP.
+ * @param[in] index Chi so nut theo thu tu UP, DOWN, SELECT.
+ * @param[in] user Ngu canh callback, khong su dung.
+ * @retval 1 Nut dang nhan.
+ * @retval 0 Nut dang tha hoac chi so sai.
+ */
 static uint8_t Button_ReadGPIO(uint8_t index, void *user)
 {
     (void)user;

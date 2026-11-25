@@ -11,8 +11,13 @@ typedef enum {
     BUTTON_SELECT
 } ButtonEvent;
 
-// Callback doc nut: tra ve 1 neu DANG NHAN, 0 neu KHONG nhan.
-// Callback chuyen muc chan GPIO thanh trang thai nhan nut.
+/**
+ * @brief Callback doc trang thai vat ly cua mot nut nhan.
+ * @param[in] button_index Chi so nut theo thu tu UP, DOWN, SELECT.
+ * @param[in] user Du lieu ngu canh cua callback.
+ * @retval 1 Nut dang duoc nhan.
+ * @retval 0 Nut dang tha.
+ */
 typedef uint8_t (*ButtonReadFn)(uint8_t button_index, void *user);
 
 typedef struct {
@@ -32,12 +37,19 @@ typedef struct {
 extern "C" {
 #endif
 
-// Khoi tao GPIO qua BSP va chong doi; anh xa chan trong bsp/board_pins.h.
-// debounce_ms = 0 thi dung mac dinh 25 ms.
+/**
+ * @brief Khoi tao GPIO qua BSP va dat lai trang thai chong doi.
+ * @param[out] b Bo quan ly nut nhan.
+ * @param[in] debounce_ms Thoi gian on dinh tinh bang ms. Dung 0 de chon 25 ms.
+ */
 void Button_Init(ButtonManager *b, uint32_t debounce_ms);
 
-// Goi dinh ky (vd 10ms). Khi NHAN nut on dinh, tao 1 event.
-// Nhung nut duoc giu khong bi lap su kien lien tuc.
+/**
+ * @brief Quet nut nhan va phat su kien khi muc nhan on dinh.
+ * @param[in,out] b Bo quan ly nut nhan.
+ * @param[in] now_ms Moc thoi gian hien tai tinh bang ms.
+ * @return Su kien cua mot nut vua nhan, hoac BUTTON_NONE neu khong co.
+ */
 ButtonEvent Button_Poll(ButtonManager *b, uint32_t now_ms);
 
 #ifdef __cplusplus

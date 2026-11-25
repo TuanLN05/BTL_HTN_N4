@@ -44,6 +44,11 @@ static const uint8_t punct_under[5]={0x40,0x40,0x40,0x40,0x40};
 static const uint8_t punct_comma[5]={0,0x50,0x30,0,0};
 static const uint8_t punct_star[5]={0x14,0x08,0x3E,0x08,0x14};
 
+/**
+ * @brief Tim mau bitmap 5x7 cua mot ky tu.
+ * @param[in] ch Ky tu can tra.
+ * @return Con tro den nam byte bitmap.
+ */
 static const uint8_t *glyph(char ch) {
     if (ch >= 'a' && ch <= 'z') ch = (char)(ch-'a'+'A');
     if (ch >= 'A' && ch <= 'Z') return letters[ch-'A'];
@@ -70,8 +75,14 @@ static const uint8_t *glyph(char ch) {
 }
 
 
-// 0x00 = sau do la LENH; 0x40 = sau do la DU LIEU HIEN THI.
-// Callback d->write thuc hien giao dich I2C.
+/**
+ * @brief Them byte dieu khien lenh va gui goi lenh SH1106 qua callback.
+ * @param[in,out] d Doi tuong OLED.
+ * @param[in] cmd Mang byte lenh.
+ * @param[in] count So byte lenh tu 1 den 25.
+ * @retval 0 Gui thanh cong.
+ * @return Ma loi khac 0 neu tham so hoac giao dich sai.
+ */
 static int send_commands(Sh1106 *d, const uint8_t *cmd, uint8_t count)
 {
     uint8_t tx[26];
@@ -82,7 +93,14 @@ static int send_commands(Sh1106 *d, const uint8_t *cmd, uint8_t count)
     return d->last_error;
 }
 
-// Gui du lieu hien thi qua callback I2C voi byte dieu khien 0x40.
+/**
+ * @brief Them byte dieu khien du lieu va gui goi du lieu SH1106 qua callback.
+ * @param[in,out] d Doi tuong OLED.
+ * @param[in] src Mang byte du lieu.
+ * @param[in] count So byte du lieu tu 1 den 32.
+ * @retval 0 Gui thanh cong.
+ * @return Ma loi khac 0 neu tham so hoac giao dich sai.
+ */
 static int send_data(Sh1106 *d, const uint8_t *src, uint8_t count)
 {
     uint8_t tx[33];

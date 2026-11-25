@@ -26,21 +26,61 @@ enum
     BMP280_ERROR_INVALID_DATA = 9
 };
 
-// Goi tu mot luong su dung I2C. Init/reset tra 1 khi thanh cong, 0 khi loi.
-// Ma loi 1..4 danh cho giao dich I2C1 cua BMP280.
+/**
+ * @brief Tim BMP280, reset va nap he so hieu chuan cua cam bien.
+ * @retval 1 Khoi tao thanh cong.
+ * @retval 0 Khong tim thay cam bien hoac khoi tao loi.
+ */
 uint8_t bmp280_init(void);
+
+/**
+ * @brief Reset mem BMP280 va cho du lieu noi bo san sang.
+ * @retval 1 Reset thanh cong.
+ * @retval 0 Khong tim thay cam bien hoac reset loi.
+ * @note Goi lai bmp280_init() truoc khi do.
+ */
 uint8_t bmp280_reset(void); // Goi lai init sau reset.
 
-// Ap suat da bu nhiet do (Pa), tra NAN khi loi. Chia 100 de doi sang hPa.
+/**
+ * @brief Kich mot lan do va lay ap suat da bu nhiet do.
+ * @return Ap suat theo Pa, hoac NAN neu loi.
+ */
 float readBmp280(void);
-// Cung mot lan do: tra ap suat (Pa) va ghi nhiet do (C) neu co con tro.
+
+/**
+ * @brief Do ap suat va nhiet do tu cung mot lan do BMP280.
+ * @param[out] temperature_c Nhiet do theo do C, hoac NAN neu loi. Co the la NULL.
+ * @return Ap suat da bu nhiet do theo Pa, hoac NAN neu loi.
+ */
 float readBmp280Sample(float *temperature_c);
+
+/**
+ * @brief Doc ma loi BMP280 gan nhat.
+ * @return Ma BMP280_ERROR_*.
+ */
 uint8_t bmp280_get_last_error(void);
+
+/**
+ * @brief Doc dia chi 7 bit cua BMP280 da nhan dien.
+ * @return Dia chi 0x76 hoac 0x77, hoac 0 neu chua xac dinh.
+ */
 uint8_t bmp280_get_address(void); // 0 neu chua tim thay.
+/**
+ * @brief Doc ID chip gan nhat nhan duoc khi do tim.
+ * @return ID da doc, hoac 0 neu chua doc duoc.
+ */
 uint8_t bmp280_get_chip_id(void);
 
-// Ham cho mili giay dung trong driver BMP280. NULL dung DWT nhu mac dinh.
+/**
+ * @brief Chon callback cho ngu trong luc doi BMP280.
+ * @param[in] wait_ms Ham cho theo ms. Dung NULL de cho bang DWT.
+ */
 void bmp280_set_delay(void (*wait_ms)(uint32_t));
+
+/**
+ * @brief Cho trong driver BMP280 bang callback hoac bo dem DWT.
+ * @param[in] ms So mili giay can cho.
+ */
 void I2C_DelayMs(uint16_t ms);
 
 #ifdef __cplusplus

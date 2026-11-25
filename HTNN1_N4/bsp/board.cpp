@@ -9,6 +9,9 @@ const uint8_t button_pins[] = {
     BOARD_BUTTON_UP_PIN, BOARD_BUTTON_DOWN_PIN, BOARD_BUTTON_SELECT_PIN
 };
 
+/**
+ * @brief Khoi tao USART1 115200 8N1 theo clock APB2 thuc te va gui log khoi dong.
+ */
 void init_uart()
 {
     constexpr uint32_t baud = BOARD_UART_BAUD;
@@ -23,6 +26,9 @@ void init_uart()
     dma_uart_writebytes(reinterpret_cast<const uint8_t *>(message), sizeof(message) - 1U);
 }
 
+/**
+ * @brief Cau hinh TIM2 dem theo buoc 1 ms cho timeout I2C1.
+ */
 void init_timer2()
 {
     const uint32_t prescaler = (RCC->CFGR & RCC_CFGR_PPRE1) >> RCC_CFGR_PPRE1_Pos;

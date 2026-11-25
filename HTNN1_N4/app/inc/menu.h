@@ -57,15 +57,67 @@ typedef struct {
 extern "C" {
 #endif
 
+/**
+ * @brief Khoi tao trang chu va gan driver OLED, callback cho menu.
+ * @param[out] m Trang thai menu.
+ * @param[in] display Driver OLED ma menu se ve vao.
+ * @param[in] hooks Cac callback luu nguong va ghi RTC, co the la NULL.
+ */
 void Menu_Init(Menu *m, Sh1106 *display, const MenuHooks *hooks);
+
+/**
+ * @brief Cap nhat mot so do va co hop le tren menu.
+ * @param[in,out] m Trang thai menu.
+ * @param[in] id Chi so so do.
+ * @param[in] value Gia tri nhan 10 cho nhiet do, do am va ap suat, hoac ADC tho cho MQ5.
+ * @param[in] valid Khac 0 neu mau hop le.
+ */
 void Menu_SetSensor(Menu *m, MenuSensor id, int32_t value, uint8_t valid);
+
+/**
+ * @brief Cap nhat ngay gio hien thi trong menu.
+ * @param[in,out] m Trang thai menu.
+ * @param[in] date_time Ngay gio can hien thi. Dung NULL de danh dau RTC khong hop le.
+ */
 void Menu_SetRTC(Menu *m, const MenuDateTime *date_time);
-// Nap nguong tu bo nho (khong goi callback saved).
+
+/**
+ * @brief Nap nguong hien thi va gioi han no vao mien gia tri cho phep.
+ * @param[in,out] m Trang thai menu.
+ * @param[in] id Chi so nguong.
+ * @param[in] value Nguong moi theo don vi cua so do.
+ * @note Ham nay khong goi callback luu Flash.
+ */
 void Menu_SetThreshold(Menu *m, MenuLimit id, int32_t value);
+
+/**
+ * @brief Doc gia tri nguong dang duoc menu su dung.
+ * @param[in] m Trang thai menu.
+ * @param[in] id Chi so nguong.
+ * @return Gia tri nguong, hoac 0 neu menu hay chi so khong hop le.
+ */
 int32_t Menu_GetThreshold(const Menu *m, MenuLimit id);
+
+/**
+ * @brief Cap nhat cac canh bao do TaskAlarm cung cap va chon popup neu can.
+ * @param[in,out] m Trang thai menu.
+ * @param[in] alarms Mat na canh bao, moi bit tuong ung mot MenuLimit.
+ */
 void Menu_SetAlarmMask(Menu *m, uint8_t alarms);
+
+/**
+ * @brief Xu ly nut nhan de dieu huong, chinh gia tri hoac xac nhan luu.
+ * @param[in,out] m Trang thai menu.
+ * @param[in] event Su kien nut da qua chong doi.
+ */
 void Menu_HandleButton(Menu *m, ButtonEvent event);
-// Ve vao framebuffer neu co thay doi. TaskUI gui tung doan qua I2C.
+
+/**
+ * @brief Ve trang hien tai hoac popup vao framebuffer khi giao dien thay doi.
+ * @param[in,out] m Trang thai menu va framebuffer.
+ * @retval true Da ve khung hinh moi.
+ * @retval false Khong co khung can ve hoac dau vao khong hop le.
+ */
 bool Menu_Draw(Menu *m);
 
 #ifdef __cplusplus

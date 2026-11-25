@@ -15,7 +15,12 @@ typedef struct {
     uint32_t checksum;
     uint16_t commit, reserved;
 } Record;
-// Tinh ma kiem tra FNV-1a tren phan du lieu truoc truong checksum cua ban ghi.
+
+/**
+ * @brief Tinh ma kiem tra FNV-1a cho cac byte truoc truong checksum.
+ * @param[in] r Ban ghi nguong.
+ * @return Gia tri checksum 32 bit.
+ */
 static uint32_t checksum(const Record *r)
 {
     const uint8_t *p = (const uint8_t *)r;
@@ -24,18 +29,35 @@ static uint32_t checksum(const Record *r)
     for (i = 0; i < offsetof(Record, checksum); ++i) h = (h ^ p[i]) * 16777619;
     return h;
 }
-// Kiem tra tung nguong co nam trong khoang gia tri cho phep hay khong.
+
+/**
+ * @brief Kiem tra cac nguong nam trong mien gia tri cho phep.
+ * @param[in] v Mang cac nguong can kiem tra.
+ * @retval 1 Tat ca nguong hop le.
+ * @retval 0 Co nguong ngoai mien.
+ */
 static int valid_values(const int32_t *v)
 {
     return v[0] >= -400 && v[0] <= 850 && v[1] >= 0 && v[1] <= 1000 &&
            v[2] >= 3000 && v[2] <= 12000 && v[3] >= 0 && v[3] <= 4095;
 }
-// Kiem tra dau commit, magic, checksum va gia tri nguong cua ban ghi Flash.
+
+/**
+ * @brief Kiem tra commit, magic, checksum va noi dung ban ghi Flash.
+ * @param[in] r Ban ghi can kiem tra.
+ * @retval 1 Ban ghi hop le.
+ * @retval 0 Ban ghi khong hop le.
+ */
 static int valid(const Record *r)
 {
     return r->commit == COMMIT && r->magic == MAGIC &&
            r->checksum == checksum(r) && valid_values(r->values);
 }
+
+/**
+ * @brief Tim ban ghi hop le moi nhat tren hai page Flash.
+ * @return Con tro den ban ghi, hoac NULL neu khong co.
+ */
 static const Record *latest(void)
 {
     const Record *a = (const Record *)PAGE0, *b = (const Record *)PAGE1;
@@ -51,7 +73,12 @@ int ThresholdStore_Load(int32_t values[MENU_LIMIT_COUNT])
     memcpy(values, r->values, sizeof(r->values));
     return 0;
 }
-// Cho Flash het ban va tra -1 neu co loi lap trinh hoac bao ve ghi.
+
+/**
+ * @brief Cho Flash het ban va kiem tra co loi.
+ * @retval 0 Khong co loi Flash.
+ * @retval -1 Co loi lap trinh hoac bao ve ghi.
+ */
 static int wait_flash(void)
 {
     while (FLASH->SR & FLASH_SR_BSY) {}

@@ -11,6 +11,13 @@
 #include <math.h>
 #include <stdio.h>
 
+/**
+ * @brief Ghi mot gia tri va cap nhat bit hop le tuong ung.
+ * @param[in,out] data Mau tong hop can cap nhat.
+ * @param[in] sensor Chi so so do.
+ * @param[in] value Gia tri cua so do.
+ * @param[in] valid true neu mau hop le.
+ */
 static void set_sample(SensorData_t *data, MenuSensor sensor, int32_t value, bool valid)
 {
     const uint8_t bit = (uint8_t)(1U << sensor);
@@ -21,12 +28,23 @@ static void set_sample(SensorData_t *data, MenuSensor sensor, int32_t value, boo
         data->valid_mask &= (uint8_t)~bit;
 }
 
+/**
+ * @brief Lam tron mot gia tri da doi don vi va danh dau NAN hoac vo cuc la mau loi.
+ * @param[in,out] data Mau tong hop can cap nhat.
+ * @param[in] sensor Chi so so do.
+ * @param[in] value Gia tri thuc da quy doi.
+ */
 static void set_scaled_sample(SensorData_t *data, MenuSensor sensor, float value)
 {
     const bool valid = isfinite(value);
     set_sample(data, sensor, valid ? lroundf(value) : 0, valid);
 }
 
+/**
+ * @brief Nha mutex I2C1 trong luc cho cam bien va lay lai truoc khi tiep tuc.
+ * @param[in] ms Thoi gian cho toi thieu tinh bang ms.
+ * @pre TaskSensor dang giu mutex I2C1.
+ */
 static void wait_for_conversion(uint32_t ms)
 {
     // Cac driver chi goi callback sau STOP, khi cam bien dang tu chuyen doi.
@@ -35,6 +53,11 @@ static void wait_for_conversion(uint32_t ms)
     App_I2CTake(portMAX_DELAY);
 }
 
+/**
+ * @brief Doc DS1307 va danh dau loi de khoi tao lai o lan doc sau.
+ * @param[in,out] data Mau tong hop chua ngay gio va co hop le.
+ * @pre TaskSensor dang giu mutex I2C1.
+ */
 static void read_rtc(SensorData_t *data)
 {
     static bool rtc_ready;
@@ -53,6 +76,11 @@ typedef struct {
     float temperature, humidity, pressure_pa;
 } SlowReadings;
 
+/**
+ * @brief Doc RTC, AHT20 va BMP280, sau do cap nhat mau tong hop.
+ * @param[in,out] data Mau tong hop nhan cac so do va co hop le.
+ * @return Nhiet do, do am va ap suat truoc khi lam tron de ghi log.
+ */
 static SlowReadings read_slow_sensors(SensorData_t *data)
 {
     static bool bus_ready;
@@ -81,6 +109,10 @@ static SlowReadings read_slow_sensors(SensorData_t *data)
     return sample;
 }
 
+/**
+ * @brief Gui mau qua IPC va doc lai de ghi log trong ban mock_sensor.
+ * @param[in] data Mau tong hop can gui.
+ */
 static void publish_sample(const SensorData_t *data)
 {
     App_IPCSendSensor(data);
@@ -95,6 +127,11 @@ static void publish_sample(const SensorData_t *data)
 #endif
 }
 
+/**
+ * @brief Ghi so do va trang thai loi len UART.
+ * @param[in] data Mau tong hop chua ADC va cac co hop le.
+ * @param[in] sample Cac so do thuc truoc khi lam tron.
+ */
 static void log_slow_sample(const SensorData_t *data, const SlowReadings *sample)
 {
     char text[96];
@@ -134,6 +171,10 @@ static void log_slow_sample(const SensorData_t *data, const SlowReadings *sample
     App_LogLine(text, length, sizeof(text));
 }
 
+/**
+ * @brief Doc MQ5 theo chu ky 125 ms va doc AHT20, BMP280, RTC theo chu ky 1 giay.
+ * @param[in] parameters Tham so FreeRTOS, khong su dung.
+ */
 static void prvSensorTask(void *parameters)
 {
     (void)parameters;

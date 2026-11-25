@@ -1,6 +1,9 @@
 #include "board_i2c.h"
 #include "hal_i2c.h"
 
+/**
+ * @brief Cho hai tick TIM2 trong qua trinh phuc hoi bus.
+ */
 static void BusDelay(void)
 {
     // TIM2 da duoc khoi tao dem 1 ms truoc khi phuc hoi bus.
@@ -73,6 +76,14 @@ constexpr uint32_t flags = I2C_SR1_AF | I2C_SR1_BERR | I2C_SR1_ARLO |
 constexpr uint32_t pending = I2C_CR1_START | I2C_CR1_STOP;
 constexpr uint16_t timeout_ms = 25U;
 
+/**
+ * @brief Cho mot trong cac bit I2C dat muc yeu cau, co kiem tra timeout.
+ * @param[in] reg Thanh ghi I2C can theo doi.
+ * @param[in] mask Mat na bit can kiem tra.
+ * @param[in] set true de cho bit bat, false de cho tat het.
+ * @retval true Da dat trang thai yeu cau.
+ * @retval false Co loi I2C hoac timeout.
+ */
 bool wait_flag(volatile uint32_t &reg, uint32_t mask, bool set = true)
 {
     const uint16_t start = static_cast<uint16_t>(TIM2->CNT);
@@ -86,6 +97,10 @@ bool wait_flag(volatile uint32_t &reg, uint32_t mask, bool set = true)
     return false;
 }
 
+/**
+ * @brief Ket thuc giao dich loi, xoa co loi va khoi phuc bus neu can.
+ * @retval false Giao dich bi huy.
+ */
 bool abort_transfer()
 {
     if ((I2C1->SR2 & I2C_SR2_MSL) && !(I2C1->CR1 & pending))
@@ -97,6 +112,13 @@ bool abort_transfer()
     return false;
 }
 
+/**
+ * @brief Cho bus ranh, gui START va dia chi I2C.
+ * @param[in] address Dia chi I2C 7 bit.
+ * @param[in] read true de doc, false de ghi.
+ * @retval true Da nhan ACK dia chi.
+ * @retval false Loi bus, NACK hoac timeout.
+ */
 bool begin_transfer(uint8_t address, bool read)
 {
     if (!wait_flag(I2C1->CR1, pending, false) || !wait_flag(I2C1->SR2, I2C_SR2_BUSY, false))
@@ -110,12 +132,20 @@ bool begin_transfer(uint8_t address, bool read)
     return true;
 }
 
+/**
+ * @brief Xoa co ADDR bang viec doc lan luot SR1 va SR2.
+ */
 void clear_address()
 {
     (void)I2C1->SR1;
     (void)I2C1->SR2;
 }
 
+/**
+ * @brief Cho STOP hoan tat va khoi phuc co ACK mac dinh.
+ * @retval true Bus da ranh.
+ * @retval false Giao dich khong the ket thuc binh thuong.
+ */
 bool finish_transfer()
 {
     if (!wait_flag(I2C1->CR1, I2C_CR1_STOP, false) || !wait_flag(I2C1->SR2, I2C_SR2_BUSY, false))

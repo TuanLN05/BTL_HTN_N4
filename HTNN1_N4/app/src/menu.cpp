@@ -29,13 +29,22 @@ static const char *const threshold_items[] = {
     "AHT TEMP", "AHT HUMIDITY", "BMP PRESSURE", "MQ5 GAS", "BACK"
 };
 
-// Ve chu tu cot 0; moi dong chiem 8 pixel theo chieu doc.
+/**
+ * @brief Ve chu tai cot 0 tren mot dong 8 pixel.
+ * @param[in,out] m Menu chua framebuffer dich.
+ * @param[in] row Chi so dong.
+ * @param[in] str Chuoi can ve.
+ */
 static void line(Menu *m, uint8_t row, const char *str)
 {
     SH1106_DrawText(m->display, 0, (uint8_t)(row * 8), str);
 }
 
-// Dem so bit 1 de hien thi so canh bao dang hoat dong.
+/**
+ * @brief Dem so bit dang bat trong mat na 8 bit.
+ * @param[in] v Mat na can dem.
+ * @return So bit bang 1.
+ */
 static uint8_t count_bits(uint8_t v)
 {
     uint8_t n = 0;
@@ -43,7 +52,12 @@ static uint8_t count_bits(uint8_t v)
     return n;
 }
 
-// Tra so ngay cua thang, tinh ca nam nhuan; thang sai tra ve 31.
+/**
+ * @brief Tinh so ngay trong thang co xet nam nhuan.
+ * @param[in] year Nam duong lich.
+ * @param[in] month Thang tu 1 den 12.
+ * @return So ngay trong thang, hoac 31 neu thang khong hop le.
+ */
 static uint8_t days_in_month(uint16_t year, uint8_t month)
 {
     static const uint8_t days[] = {31,28,31,30,31,30,31,31,30,31,30,31};
@@ -54,7 +68,12 @@ static uint8_t days_in_month(uint16_t year, uint8_t month)
     return (month == 2 && leap) ? 29 : days[month - 1];
 }
 
-// Kiem tra ngay gio hop le trong khoang nam 2000 den 2099.
+/**
+ * @brief Kiem tra ngay gio trong khoang nam 2000 den 2099.
+ * @param[in] d Ngay gio can kiem tra.
+ * @retval 1 Ngay gio hop le.
+ * @retval 0 Con tro rong hoac gia tri sai.
+ */
 static uint8_t valid_rtc(const MenuDateTime *d)
 {
     return d && d->year >= 2000 && d->year <= 2099 &&
@@ -63,8 +82,12 @@ static uint8_t valid_rtc(const MenuDateTime *d)
         d->hour <= 23 && d->minute <= 59 && d->second <= 59;
 }
 
-// Dinh dang so nguyen nhan 10 thanh chuoi co mot chu so thap phan.
-// Vi du: 253 thanh "25.3", -32 thanh "-3.2"; khong can phep tinh float.
+/**
+ * @brief Dinh dang gia tri da nhan 10 thanh so co mot chu so thap phan.
+ * @param[out] buf Bo dem chuoi.
+ * @param[in] len Dung luong bo dem tinh bang byte.
+ * @param[in] scaled Gia tri nguyen da nhan 10.
+ */
 static void fmt_x10(char *buf, size_t len, int32_t scaled)
 {
     uint32_t abs_value = (uint32_t)(scaled < 0 ? -(int64_t)scaled : scaled);
@@ -73,7 +96,13 @@ static void fmt_x10(char *buf, size_t len, int32_t scaled)
                    (unsigned long)(abs_value % 10));
 }
 
-// Hien "--" neu mau loi; MQ5 hien ADC, cac cam bien khac hien so thap phan.
+/**
+ * @brief Dinh dang so do theo don vi hien thi.
+ * @param[in] m Menu chua so do va co hop le.
+ * @param[in] s Chi so so do.
+ * @param[out] buf Bo dem chuoi, nhan chuoi -- neu mau loi.
+ * @param[in] len Dung luong bo dem tinh bang byte.
+ */
 static void fmt_sensor(const Menu *m, MenuSensor s, char *buf, size_t len)
 {
     if (!(m->valid_mask & BIT(s))) {
@@ -85,7 +114,13 @@ static void fmt_sensor(const Menu *m, MenuSensor s, char *buf, size_t len)
     }
 }
 
-// Dinh dang nguong kem don vi ADC, %, hPa hoac C.
+/**
+ * @brief Dinh dang nguong kem don vi ADC, phan tram, hPa hoac do C.
+ * @param[in] k Chi so nguong.
+ * @param[in] scaled Gia tri nguong da quy doi.
+ * @param[out] buf Bo dem chuoi.
+ * @param[in] len Dung luong bo dem tinh bang byte.
+ */
 static void fmt_limit(MenuLimit k, int32_t scaled, char *buf, size_t len)
 {
     if (k == MENU_LIMIT_GAS) {
@@ -99,7 +134,11 @@ static void fmt_limit(MenuLimit k, int32_t scaled, char *buf, size_t len)
     }
 }
 
-// Chon mot canh bao theo thu tu uu tien de hien popup.
+/**
+ * @brief Chon canh bao theo thu tu gas, nhiet do, do am, ap suat.
+ * @param[in] alarms Mat na cac nguong dang canh bao.
+ * @return Chi so nguong uu tien cao nhat, hoac MENU_LIMIT_TEMP neu mat na rong.
+ */
 static uint8_t high_priority_alarm(uint8_t alarms)
 {
     // Thu tu hien popup: gas, nhiet do, do am, sau cung la ap suat.
@@ -190,19 +229,33 @@ int32_t Menu_GetThreshold(const Menu *m, MenuLimit id)
     return m && (unsigned)id < MENU_LIMIT_COUNT ? m->threshold[id] : 0;
 }
 
-// Di len mot muc; tu muc dau quay ve muc cuoi.
+/**
+ * @brief Di len mot muc va quay ve muc cuoi neu dang o muc dau.
+ * @param[in] old Chi so muc hien tai.
+ * @param[in] count Tong so muc, lon hon 0.
+ * @return Chi so muc moi.
+ */
 static uint8_t wrap_up(uint8_t old, uint8_t count)
 {
     return old == 0 ? (uint8_t)(count - 1) : (uint8_t)(old - 1);
 }
 
-// Di xuong mot muc; tu muc cuoi quay ve muc dau.
+/**
+ * @brief Di xuong mot muc va quay ve muc dau neu dang o muc cuoi.
+ * @param[in] old Chi so muc hien tai.
+ * @param[in] count Tong so muc, lon hon 0.
+ * @return Chi so muc moi.
+ */
 static uint8_t wrap_down(uint8_t old, uint8_t count)
 {
     return (uint8_t)((old + 1) % count);
 }
 
-// Chinh ban nhap nguong theo buoc cua cam bien va quay vong tai hai dau.
+/**
+ * @brief Tang hoac giam nguong trong ban nhap va quay vong tai hai dau.
+ * @param[in,out] m Menu chua nguong dang sua.
+ * @param[in] sign Dung 1 de tang hoac -1 de giam.
+ */
 static void adjust_threshold(Menu *m, int8_t sign)
 {
     const MenuLimit k = m->editing_limit;
@@ -212,7 +265,11 @@ static void adjust_threshold(Menu *m, int8_t sign)
     m->edit_limit_value = v;
 }
 
-// Chinh mot truong ngay gio trong ban nhap, chua gui yeu cau ghi RTC.
+/**
+ * @brief Doi mot truong RTC trong ban nhap, quay vong va can ngay neu can.
+ * @param[in,out] m Menu chua ngay gio ban nhap.
+ * @param[in] sign Gia tri duong de tang, gia tri am de giam.
+ */
 static void adjust_rtc_field(Menu *m, int8_t sign)
 {
     // Tang/giam truong dang chon, quay vong khi vuot gioi han.
@@ -358,7 +415,14 @@ void Menu_HandleButton(Menu *m, ButtonEvent event)
     m->dirty = 1;
 }
 
-// Ve toi da 6 muc; cuon danh sach de muc dang chon luon hien thi.
+/**
+ * @brief Ve danh sach toi da sau muc va cuon theo muc dang chon.
+ * @param[in,out] m Menu chua framebuffer dich.
+ * @param[in] title Tieu de danh sach.
+ * @param[in] items Mang chuoi ten cac muc.
+ * @param[in] count So muc trong mang.
+ * @param[in] selected Chi so muc dang chon.
+ */
 static void draw_list(Menu *m, const char *title,
                       const char *const *items, uint8_t count, uint8_t selected)
 {
@@ -373,7 +437,10 @@ static void draw_list(Menu *m, const char *title,
     line(m, 7, "UP/DN  SEL: CHOOSE");
 }
 
-// Ve ngay gio, cac mau cam bien va trang thai canh bao tren trang chu.
+/**
+ * @brief Ve ngay gio, so do va trang thai canh bao tren trang chu.
+ * @param[in,out] m Menu chua du lieu va framebuffer dich.
+ */
 static void draw_home(Menu *m)
 {
     char linebuf[30], a[18], b[18];
@@ -409,7 +476,10 @@ static void draw_home(Menu *m)
     line(m, 7, "SELECT: MENU");
 }
 
-// Ve ten nguong dang sua, gia tri ban nhap va huong dan nut bam.
+/**
+ * @brief Ve man hinh sua nguong va gia tri ban nhap.
+ * @param[in,out] m Menu chua du lieu va framebuffer dich.
+ */
 static void draw_limit_change(Menu *m)
 {
     char val[24], msg[30];
@@ -422,7 +492,10 @@ static void draw_limit_change(Menu *m)
     line(m, 7, "SELECT: OPTIONS");
 }
 
-// Ve lua chon luu/huy nguong va thong bao neu lan luu truoc that bai.
+/**
+ * @brief Ve lua chon luu, huy va thong bao khi luu nguong that bai.
+ * @param[in,out] m Menu chua du lieu va framebuffer dich.
+ */
 static void draw_limit_confirm(Menu *m)
 {
     char msg[27], val[18];
@@ -436,7 +509,10 @@ static void draw_limit_confirm(Menu *m)
     line(m, 7, "UP/DN  SEL: CHOOSE");
 }
 
-// Tao danh sach 6 truong ngay gio cung hai lua chon SAVE va BACK.
+/**
+ * @brief Ve danh sach sau truong ngay gio va hai lua chon luu, quay lai.
+ * @param[in,out] m Menu chua du lieu va framebuffer dich.
+ */
 static void draw_rtc_list(Menu *m)
 {
     char items[8][24];
@@ -455,7 +531,10 @@ static void draw_rtc_list(Menu *m)
     if (m->rtc_save_failed) line(m, 7, "RTC SAVE FAILED!");
 }
 
-// Ve ngay gio ban nhap va ten truong dang duoc chinh.
+/**
+ * @brief Ve truong RTC dang sua va ngay gio ban nhap.
+ * @param[in,out] m Menu chua du lieu va framebuffer dich.
+ */
 static void draw_rtc_change(Menu *m)
 {
     char msg[26];
@@ -472,7 +551,10 @@ static void draw_rtc_change(Menu *m)
     line(m, 7, "SELECT: DONE");
 }
 
-// Liet ke cac nguong dang canh bao va lua chon quay lai.
+/**
+ * @brief Ve danh sach cac nguong dang canh bao.
+ * @param[in,out] m Menu chua du lieu va framebuffer dich.
+ */
 static void draw_alerts(Menu *m)
 {
     uint8_t i, row = 1;
@@ -489,7 +571,10 @@ static void draw_alerts(Menu *m)
     line(m, 7, "> BACK");
 }
 
-// Ve canh bao uu tien, gia tri cam bien va nguong tuong ung.
+/**
+ * @brief Ve canh bao uu tien kem gia tri do va nguong tuong ung.
+ * @param[in,out] m Menu chua du lieu va framebuffer dich.
+ */
 static void draw_popup(Menu *m)
 {
     char msg[30], val[20];

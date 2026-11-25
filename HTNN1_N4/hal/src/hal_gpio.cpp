@@ -1,5 +1,12 @@
 #include "hal_gpio.h"
 
+/**
+ * @brief Kiem tra cong GPIO va chi so chan.
+ * @param[in] port Cong can kiem tra.
+ * @param[in] pin Chi so chan.
+ * @retval 1 Cong A, B hoac C va chan tu 0 den 15.
+ * @retval 0 Cong hoac chan khong hop le.
+ */
 static uint8_t gpio_Valid(GPIO_TypeDef *port, uint8_t pin)
 {
     return (pin <= 15) && (port == GPIOA || port == GPIOB || port == GPIOC);

@@ -22,6 +22,10 @@ bool initialized;
 void (*wait_ms_callback)(uint32_t);
 
 void delay(uint32_t time);
+
+/**
+ * @brief Khoi tao bo dem chu ky DWT va luu so chu ky trong mot ms.
+ */
 void init_timer()
 {
     if (cycles_per_ms != 0U)
@@ -32,12 +36,24 @@ void init_timer()
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 }
 
+/**
+ * @brief Cho bang bo dem chu ky DWT.
+ * @param[in] cycles So chu ky can cho.
+ */
 void delay_cycles(uint32_t cycles)
 {
     const uint32_t start = DWT->CYCCNT;
     while (DWT->CYCCNT - start < cycles) {}
 }
 
+/**
+ * @brief Cho trang thai bit I2C duoc yeu cau va ghi lai ma loi neu can.
+ * @param[in] reg Thanh ghi I2C can theo doi.
+ * @param[in] mask Mat na bit can kiem tra.
+ * @param[in] set true de cho bit bat, false de cho tat het.
+ * @retval true Da dat trang thai yeu cau.
+ * @retval false Loi I2C hoac timeout.
+ */
 bool wait_flag(volatile uint32_t &reg, uint32_t mask, bool set = true)
 {
     const uint32_t start = DWT->CYCCNT;
@@ -60,6 +76,9 @@ bool wait_flag(volatile uint32_t &reg, uint32_t mask, bool set = true)
     return false;
 }
 
+/**
+ * @brief Reset I2C1 va khoi phuc cac thanh ghi timing va dia chi.
+ */
 void reset_i2c_peripheral()
 {
     // Giu timing va dia chi cua I2C1 vi RTC va BMP280 dung chung bus.
@@ -79,6 +98,10 @@ void reset_i2c_peripheral()
     I2C1->CR1 = control | I2C_CR1_PE;
 }
 
+/**
+ * @brief Huy giao dich loi, khoi phuc I2C1 va giu ma loi ban dau.
+ * @retval false Giao dich bi huy.
+ */
 bool abort_transfer()
 {
     const AHT20_Error failure = last_error;
@@ -92,6 +115,12 @@ bool abort_transfer()
     return false;
 }
 
+/**
+ * @brief Doi muc SCL va SDA, sau do kiem tra muc doc lai.
+ * @param[in] levels Mat na cac chan can nha len HIGH.
+ * @retval true Ca hai chan dat muc yeu cau.
+ * @retval false It nhat mot chan chua dat muc yeu cau.
+ */
 bool set_bus_lines(uint32_t levels)
 {
     GPIOB->BSRR = levels | ((pins & ~levels) << 16U);
@@ -99,6 +128,11 @@ bool set_bus_lines(uint32_t levels)
     return (GPIOB->IDR & pins) == levels;
 }
 
+/**
+ * @brief Khoi phuc I2C1 khi co BUSY bi ket bang cach tao canh SCL va SDA.
+ * @retval true Da tao duoc chuoi muc yeu cau.
+ * @retval false Khong tao duoc mot muc trong chuoi.
+ */
 bool unlock_busy()
 {
     // ES096: khoi phuc bo loc I2C khi BUSY=1 du ca SDA va SCL dang cao.
@@ -114,6 +148,11 @@ bool unlock_busy()
     return released;
 }
 
+/**
+ * @brief Cau hinh I2C1 va kiem tra cac duong bus san sang cho AHT20.
+ * @retval true Bus da ranh.
+ * @retval false Cau hinh, muc duong bus hoac giao dich loi.
+ */
 bool prepare_bus()
 {
     init_timer();
@@ -151,6 +190,12 @@ bool prepare_bus()
     return wait_flag(I2C1->SR2, I2C_SR2_BUSY, false);
 }
 
+/**
+ * @brief Phat START va gui dia chi AHT20 theo chieu doc hoac ghi.
+ * @param[in] read true de doc, false de ghi.
+ * @retval true Da nhan ACK dia chi.
+ * @retval false Loi bus, NACK hoac timeout.
+ */
 bool begin_transfer(bool read)
 {
     init_timer();
@@ -169,12 +214,20 @@ bool begin_transfer(bool read)
     return true;
 }
 
+/**
+ * @brief Xoa co ADDR bang viec doc lan luot SR1 va SR2.
+ */
 void clear_address()
 {
     (void)I2C1->SR1;
     (void)I2C1->SR2;
 }
 
+/**
+ * @brief Cho STOP hoan tat, bus ranh va phuc hoi ACK.
+ * @retval true Giao dich da ket thuc.
+ * @retval false Loi bus hoac timeout.
+ */
 bool finish_transfer()
 {
     if (!wait_flag(I2C1->CR1, I2C_CR1_STOP, false) || !wait_flag(I2C1->SR2, I2C_SR2_BUSY, false))
@@ -184,6 +237,13 @@ bool finish_transfer()
     return true;
 }
 
+/**
+ * @brief Gui cac byte lenh den AHT20.
+ * @param[in] data Day byte lenh.
+ * @param[in] size So byte can gui.
+ * @retval true Gui lenh thanh cong.
+ * @retval false Loi ghi qua I2C.
+ */
 bool write_command(const uint8_t *data, uint8_t size)
 {
     if (!begin_transfer(false))
@@ -201,7 +261,13 @@ bool write_command(const uint8_t *data, uint8_t size)
     return finish_transfer();
 }
 
-// AHT20 doc 1 byte trang thai, 3 byte hieu chuan hoac 6 byte do.
+/**
+ * @brief Doc khung phan hoi gom 1, 3 hoac 6 byte tu AHT20.
+ * @param[out] data Bo dem nhan.
+ * @param[in] size So byte can doc.
+ * @retval true Doc du byte.
+ * @retval false Loi doc qua I2C.
+ */
 bool read_data(uint8_t *data, uint8_t size)
 {
     if (!begin_transfer(true))
@@ -248,6 +314,11 @@ bool read_data(uint8_t *data, uint8_t size)
     return finish_transfer();
 }
 
+/**
+ * @brief Doc va ghi lai cac thanh ghi hieu chuan can thiet cua AHT20.
+ * @retval true Da khoi phuc cac thanh ghi.
+ * @retval false Loi giao tiep I2C.
+ */
 bool restore_calibration()
 {
     // Trinh tu AHT20/21 cua Aosong: doc va ghi lai hai byte cua tung thanh ghi.
@@ -272,6 +343,12 @@ bool restore_calibration()
     return true;
 }
 
+/**
+ * @brief Kich do, doi cam bien san sang va nhan khung so do AHT20.
+ * @param[out] data Mang frame_size byte nhan khung do.
+ * @retval true Da nhan khung do.
+ * @retval false Loi giao tiep hoac do qua han.
+ */
 bool measure(uint8_t (&data)[frame_size])
 {
     const uint8_t command[] = {0xACU, 0x33U, 0x00U};
@@ -292,6 +369,11 @@ bool measure(uint8_t (&data)[frame_size])
     last_error = AHT20_ERROR_MEASUREMENT_TIMEOUT;
     return false;
 }
+
+/**
+ * @brief Cho theo mili giay bang callback hoac bo dem DWT.
+ * @param[in] time So mili giay can cho.
+ */
 void delay(uint32_t time)
 {
     if (wait_ms_callback) {

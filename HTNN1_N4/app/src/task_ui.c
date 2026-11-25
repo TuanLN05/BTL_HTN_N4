@@ -18,13 +18,31 @@ static TickType_t display_state_since;
 static TickType_t last_frame;
 static uint8_t next_chunk = SH1106_CHUNK_COUNT;
 
-// Caller giu mutex cho ca lenh dinh vi va du lieu cua mot doan OLED.
+/**
+ * @brief Gui goi lenh hoac du lieu OLED qua I2C1.
+ * @param[in] address Dia chi I2C 7 bit.
+ * @param[in] data Bo dem can gui.
+ * @param[in] size So byte can gui.
+ * @param[in] user Ngu canh callback, khong su dung.
+ * @retval 0 Giao dich thanh cong.
+ * @retval -1 Giao dich that bai.
+ * @pre TaskUI giu mutex cho ca lenh dinh vi va du lieu cua mot doan OLED.
+ */
 static int oled_write(uint8_t address, const uint8_t *data, uint16_t size, void *user)
 {
     (void)user;
     return Board_I2CWrite(address, data, size) ? 0 : -1;
 }
 
+/**
+ * @brief Luu nguong moi va cong bo bo nguong cho TaskAlarm.
+ * @param[in] id Chi so nguong can doi.
+ * @param[in] value Gia tri nguong moi.
+ * @param[in] user Ngu canh callback, khong su dung.
+ * @retval 0 Da cap nhat nguong.
+ * @retval -1 Ghi Flash that bai.
+ * @note Ban mock_ui chi cap nhat nguong trong RAM.
+ */
 static int save_threshold(MenuLimit id, int32_t value, void *user)
 {
     (void)user;
@@ -42,6 +60,14 @@ static int save_threshold(MenuLimit id, int32_t value, void *user)
     return 0;
 }
 
+/**
+ * @brief Tinh thu trong tuan, ghi DS1307 va cap nhat ngay gio hien thi.
+ * @param[in] value Ngay gio moi da duoc menu kiem tra.
+ * @param[in] user Ngu canh callback, khong su dung.
+ * @retval 0 Da cap nhat ngay gio.
+ * @retval -1 Bus dang ban hoac ghi RTC that bai.
+ * @note Ban mock_ui chi cap nhat ngay gio hien thi.
+ */
 static int write_rtc(const MenuDateTime *value, void *user)
 {
     (void)user;
@@ -66,6 +92,11 @@ static int write_rtc(const MenuDateTime *value, void *user)
     return 0;
 }
 
+/**
+ * @brief Lay mau moi nhat va dua so do, ngay gio, canh bao vao menu.
+ * @retval true Mat na canh bao thay doi.
+ * @retval false Mat na giu nguyen hoac khong co mau moi.
+ */
 static bool read_update(void)
 {
     AlarmData_t update;
@@ -79,6 +110,13 @@ static bool read_update(void)
     return alarm_changed;
 }
 
+/**
+ * @brief Quet nut, ghi log su kien va xu ly menu neu OLED hoat dong.
+ * @param[in,out] buttons Bo quan ly trang thai chong doi.
+ * @param[in] now Tick hien tai.
+ * @retval true Da chuyen su kien cho menu.
+ * @retval false Khong co su kien hoac OLED chua san sang.
+ */
 static bool poll_button(ButtonManager *buttons, TickType_t now)
 {
     const ButtonEvent event = Button_Poll(buttons, now * portTICK_PERIOD_MS);
@@ -96,6 +134,11 @@ static bool poll_button(ButtonManager *buttons, TickType_t now)
     return true;
 }
 
+/**
+ * @brief Khoi tao hoac cap nhat toi da mot doan OLED trong moi luot cua TaskUI.
+ * @param[in] now Tick hien tai.
+ * @param[in] redraw true de ve lai khi nut nhan hoac canh bao thay doi.
+ */
 static void run_display(TickType_t now, bool redraw)
 {
     if (display_state == DISPLAY_OFFLINE) {
@@ -148,6 +191,10 @@ static void run_display(TickType_t now, bool redraw)
 }
 
 #ifdef APP_MOCK_UI
+/**
+ * @brief Tao mau cam bien, ngay gio va canh bao gia de thu TaskUI.
+ * @param[in] now Tick hien tai.
+ */
 static void publish_mock_update(TickType_t now)
 {
     static TickType_t previous;
@@ -172,6 +219,10 @@ static void publish_mock_update(TickType_t now)
 }
 #endif
 
+/**
+ * @brief Doc nut va nhan mau moi nhat theo chu ky 10 ms, gui OLED theo tung doan.
+ * @param[in] parameters Tham so FreeRTOS, khong su dung.
+ */
 static void prvUITask(void *parameters)
 {
     (void)parameters;

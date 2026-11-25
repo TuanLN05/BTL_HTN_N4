@@ -1,12 +1,25 @@
 #include "rtc.h"
 #include "board_i2c.h"
 
+/**
+ * @brief Chon thanh ghi bat dau cua DS1307 va doc day byte lien tiep.
+ * @param[in] reg Dia chi thanh ghi dau tien.
+ * @param[out] data Bo dem nhan.
+ * @param[in] size So byte can doc.
+ * @retval true Giao dich thanh cong.
+ * @retval false Ghi dia chi hoac doc du lieu that bai.
+ */
 static bool read_registers(uint8_t reg, uint8_t *data, uint8_t size)
 {
     return Board_I2CWrite(rtc_addr, &reg, 1U) &&
            Board_I2CRead(rtc_addr, data, size);
 }
 
+/**
+ * @brief Doi mot byte BCD sang so thap phan.
+ * @param[in] value Byte BCD can giai ma.
+ * @return So 0 den 99 hoac 0xFF neu BCD khong hop le.
+ */
 static uint8_t bcd_decode(uint8_t value)
 {
     if ((value & 0x0FU) > 9U || value > 0x99U)
@@ -14,11 +27,23 @@ static uint8_t bcd_decode(uint8_t value)
     return (uint8_t)((value >> 4) * 10U + (value & 0x0FU));
 }
 
+/**
+ * @brief Doi so thap phan sang mot byte BCD.
+ * @param[in] value So tu 0 den 99.
+ * @return Bieu dien BCD cua gia tri.
+ */
 static uint8_t bcd_encode(uint8_t value)
 {
     return (uint8_t)(((value / 10U) << 4) | (value % 10U));
 }
 
+/**
+ * @brief Kiem tra ngay, thu va gio theo gioi han cua DS1307.
+ * @param[in] date Ngay va thu can kiem tra.
+ * @param[in] time Gio can kiem tra.
+ * @retval true Ngay gio hop le.
+ * @retval false Co truong khong hop le.
+ */
 static bool date_time_valid(const DATE *date, const TIME *time)
 {
     static const uint8_t days_in_month[] =

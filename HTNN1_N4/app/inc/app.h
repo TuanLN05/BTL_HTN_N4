@@ -1,8 +1,12 @@
 #ifndef APP_H
 #define APP_H
 
-// Goi mot lan sau Board_Init(), truoc khi tao task.
-// Khoi tao IPC va log UART. Tra false neu khoi tao that bai.
+/**
+ * @brief Khoi tao IPC va log UART truoc khi tao task.
+ * @retval true Khoi tao thanh cong.
+ * @retval false Khong tao duoc queue hoac mutex.
+ * @pre Da goi Board_Init().
+ */
 bool App_Init(void);
 
 #endif

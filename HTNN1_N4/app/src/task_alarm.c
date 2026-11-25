@@ -7,6 +7,12 @@ static const MenuSensor limit_source[MENU_LIMIT_COUNT] = {
     MENU_AHT_TEMP, MENU_AHT_HUM, MENU_BMP_PRESS, MENU_MQ5_ADC
 };
 
+/**
+ * @brief So sanh tung so do hop le voi nguong tuong ung.
+ * @param[in] data Mau cam bien va mat na hop le.
+ * @param[in] thresholds Mang nguong theo MenuLimit.
+ * @return Mat na cac gia tri hop le lon hon hoac bang nguong.
+ */
 static uint8_t evaluate_alarms(const SensorData_t *data, const int32_t thresholds[MENU_LIMIT_COUNT])
 {
     uint8_t alarms = 0;
@@ -18,6 +24,10 @@ static uint8_t evaluate_alarms(const SensorData_t *data, const int32_t threshold
     return alarms;
 }
 
+/**
+ * @brief Cho mau cam bien, tinh canh bao, dieu khien LED va gui ket qua cho UI.
+ * @param[in] parameters Tham so FreeRTOS, khong su dung.
+ */
 static void prvAlarmTask(void *parameters)
 {
     (void)parameters;

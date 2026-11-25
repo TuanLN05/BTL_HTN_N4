@@ -7,6 +7,14 @@ namespace
 constexpr uint32_t timeout_ms = 10U;
 bool adc_ready;
 
+/**
+ * @brief Cho mot bit ADC dat trang thai yeu cau trong gioi han thoi gian.
+ * @param[in] reg Thanh ghi can theo doi.
+ * @param[in] mask Mat na bit can kiem tra.
+ * @param[in] set true de cho bit bat, false de cho bit tat.
+ * @retval true Da dat trang thai yeu cau.
+ * @retval false Het thoi gian cho.
+ */
 bool wait_adc(volatile uint32_t &reg, uint32_t mask, bool set)
 {
     const uint32_t start = DWT->CYCCNT;

@@ -8,6 +8,10 @@
 #include "task_sensor.h"
 #include "task_ui.h"
 
+/**
+ * @brief Khoi tao board va IPC, tao task theo cau hinh build va chay FreeRTOS.
+ * @note Khi scheduler khong chay, ham o lai trong vong lap cuoi.
+ */
 int main(void)
 {
     Board_Init();

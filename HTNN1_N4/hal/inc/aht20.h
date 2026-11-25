@@ -24,13 +24,47 @@ typedef enum
 } AHT20_Error;
 
 // Goi tu mot luong su dung I2C1. Tham so delay tinh bang mili giay.
+/**
+ * @brief Gui lenh reset mem cho AHT20 va danh dau can khoi tao lai.
+ */
 void aht20_reset(void);
+
+/**
+ * @brief Chon callback cho ngu trong luc doi AHT20.
+ * @param[in] wait_ms Ham cho theo ms. Dung NULL de cho bang DWT.
+ */
 void aht20_set_delay(void (*wait_ms)(uint32_t));
-// Ket qua la NAN khi loi. Co the truyen nullptr de bo qua mot gia tri.
+
+/**
+ * @brief Doc nhiet do va do am tu cung mot lan do AHT20.
+ * @param[out] temp Nhiet do theo do C, hoac NAN neu loi. Co the la NULL.
+ * @param[out] humi Do am tuong doi theo phan tram, hoac NAN neu loi. Co the la NULL.
+ * @pre Task goi co quyen su dung I2C1.
+ */
 void readAHT20(float *temp, float *humi);
+
+/**
+ * @brief Kich mot lan do va lay nhiet do AHT20.
+ * @return Nhiet do theo do C, hoac NAN neu loi.
+ */
 float readAHT20_temp(void);
+
+/**
+ * @brief Kich mot lan do va lay do am tuong doi AHT20.
+ * @return Do am theo phan tram, hoac NAN neu loi.
+ */
 float readAHT20_humi(void);
+
+/**
+ * @brief Chuan bi I2C1 va kiem tra trang thai hieu chuan cua AHT20.
+ * @note Dung aht20_get_last_error() de doc ma loi.
+ */
 void aht20_init(void);
+
+/**
+ * @brief Doc ma loi AHT20 gan nhat.
+ * @return Ma thuoc kieu AHT20_Error.
+ */
 AHT20_Error aht20_get_last_error(void);
 #ifdef __cplusplus
 }
